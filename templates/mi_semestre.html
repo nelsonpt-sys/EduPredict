@@ -1,0 +1,787 @@
+{% extends "base/base.html" %}
+{% load reservasapp_extras %}
+
+{% block titulo %}Período Académico — {{ user.username }}{% endblock %}
+
+{% block contenido %}
+<style>
+/* ══ TIMELINE ══════════════════════════════════════════════════════ */
+.academic-timeline{display:flex;align-items:flex-start;justify-content:center;padding:8px 16px 24px;overflow-x:auto;gap:0;scrollbar-width:thin;scrollbar-color:rgba(99,102,241,0.3) transparent;}
+.academic-timeline::-webkit-scrollbar{height:3px;}
+.academic-timeline::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.3);border-radius:2px;}
+.timeline-step{display:flex;flex-direction:column;align-items:center;position:relative;flex:0 0 auto;min-width:72px;cursor:pointer;transition:transform 0.2s;}
+.timeline-step:hover{transform:translateY(-2px);}
+.timeline-step.future{cursor:not-allowed;opacity:0.58;}
+.timeline-step.future:hover{transform:none;}
+.timeline-step:not(:last-child)::after{content:'';position:absolute;top:20px;left:calc(50% + 20px);width:calc(100% - 40px);height:2px;z-index:0;border-radius:2px;}
+.timeline-step.completed:not(:last-child)::after{background:linear-gradient(90deg,#6366f1,#8b5cf6);}
+.timeline-step.current:not(:last-child)::after{background:rgba(255,255,255,0.08);}
+.timeline-step.pending:not(:last-child)::after{background:rgba(234,179,8,0.2);}
+.timeline-step.future:not(:last-child)::after{background:rgba(255,255,255,0.05);}
+.step-node{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;position:relative;z-index:1;transition:transform 0.25s;flex-shrink:0;}
+.timeline-step.completed .step-node{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 0 0 3px rgba(99,102,241,0.25),0 4px 16px rgba(99,102,241,0.35);}
+.timeline-step.current .step-node{background:linear-gradient(135deg,#10b981,#34d399);color:#fff;box-shadow:0 0 0 4px rgba(16,185,129,0.25),0 4px 20px rgba(16,185,129,0.35);}
+.timeline-step.current .step-node::after{content:'';position:absolute;inset:-4px;border-radius:50%;box-shadow:0 0 20px rgba(16,185,129,0.7),0 0 40px rgba(16,185,129,0.35);animation:pulseGreen 2.5s ease-in-out infinite;pointer-events:none;}
+@keyframes pulseGreen{0%,100%{opacity:0.6;}50%{opacity:1;}}
+.timeline-step.pending .step-node{background:rgba(234,179,8,0.1);border:2px dashed rgba(234,179,8,0.6);color:#fbbf24;box-shadow:0 0 0 2px rgba(234,179,8,0.08);}
+.timeline-step.future .step-node{background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.45);}
+.step-label{margin-top:8px;font-size:10px;font-weight:700;text-align:center;white-space:nowrap;letter-spacing:0.02em;line-height:1.3;max-width:72px;overflow:hidden;text-overflow:ellipsis;}
+.timeline-step.completed .step-label{color:rgba(167,139,250,0.85);}
+.timeline-step.current   .step-label{color:#34d399;}
+.timeline-step.pending   .step-label{color:rgba(251,191,36,0.85);}
+.timeline-step.future    .step-label{color:rgba(255,255,255,0.42);}
+.step-status{font-size:8.5px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin-top:2px;text-align:center;}
+.timeline-step.completed .step-status{color:rgba(99,102,241,0.6);}
+.timeline-step.current   .step-status{color:rgba(16,185,129,0.65);}
+.timeline-step.pending   .step-status{color:rgba(234,179,8,0.55);}
+.timeline-step.future    .step-status{color:rgba(255,255,255,0.3);}
+.timeline-step.selected .step-node{outline:3px solid rgba(255,255,255,0.3);outline-offset:3px;}
+.stepper-container{background:rgba(10,10,26,0.7);border:1px solid rgba(255,255,255,0.06);border-radius:20px;padding:20px 24px 0;margin-bottom:28px;}
+.stepper-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px;}
+.stepper-title{color:rgba(148,163,184,0.5);font-size:9px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;}
+.stepper-progress-text{font-size:11px;font-weight:700;color:rgba(167,139,250,0.7);}
+
+/* ══ BANNER CERRAR ══ */
+.banner-cerrar-anterior{background:linear-gradient(135deg,rgba(234,179,8,0.08),rgba(251,191,36,0.04));border:1px solid rgba(234,179,8,0.25);border-radius:18px;padding:24px 28px;max-width:540px;margin:0 auto 24px;text-align:center;}
+
+/* ══ MODAL LÍMITE ══ */
+#overlay-limite{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99990;display:none;align-items:center;justify-content:center;padding:16px;}
+#overlay-limite.visible{display:flex;}
+.modal-limite-card{background:linear-gradient(145deg,#1a1a2e,#0d0d22);border:1px solid rgba(99,102,241,0.3);border-radius:24px;padding:36px 32px 28px;max-width:460px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.7);animation:modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes modalIn{from{opacity:0;transform:scale(0.9) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.limite-btn-num{width:54px;height:54px;background:rgba(99,102,241,0.1);border:1.5px solid rgba(99,102,241,0.22);border-radius:14px;color:#a5b4fc;font-size:17px;font-weight:700;cursor:pointer;transition:background 0.15s,transform 0.15s;display:flex;align-items:center;justify-content:center;}
+.limite-btn-num:hover{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-color:transparent;color:#fff;transform:translateY(-2px);}
+
+/* ══ RAMO CARDS ══ */
+.ramo-card-v2{border-radius:18px;overflow:hidden;position:relative;transition:transform 0.22s cubic-bezier(0.34,1.3,0.64,1);margin-bottom:4px;}
+.ramo-card-v2:hover{transform:translateY(-5px);}
+.ramo-card-v2.bloqueado{opacity:0.75;}
+
+.ramo-d5{background:linear-gradient(145deg,rgba(6,182,212,0.28),rgba(14,116,144,0.22));border:1px solid rgba(6,182,212,0.4);box-shadow:0 4px 20px rgba(6,182,212,0.08);}
+.ramo-d5:hover{box-shadow:0 10px 32px rgba(6,182,212,0.22);}
+.ramo-d4{background:linear-gradient(145deg,rgba(16,185,129,0.28),rgba(5,150,105,0.22));border:1px solid rgba(16,185,129,0.4);box-shadow:0 4px 20px rgba(16,185,129,0.08);}
+.ramo-d4:hover{box-shadow:0 10px 32px rgba(16,185,129,0.22);}
+.ramo-d3{background:linear-gradient(145deg,rgba(245,158,11,0.28),rgba(180,83,9,0.22));border:1px solid rgba(245,158,11,0.4);box-shadow:0 4px 20px rgba(245,158,11,0.08);}
+.ramo-d3:hover{box-shadow:0 10px 32px rgba(245,158,11,0.22);}
+.ramo-d2{background:linear-gradient(145deg,rgba(239,68,68,0.30),rgba(185,28,28,0.24));border:1px solid rgba(239,68,68,0.45);box-shadow:0 4px 20px rgba(239,68,68,0.12);}
+.ramo-d2::after{content:'';position:absolute;inset:0;border-radius:18px;box-shadow:0 0 28px rgba(239,68,68,0.4);animation:d2GlowPulse 3s ease-in-out infinite;pointer-events:none;}
+@keyframes d2GlowPulse{0%,100%{opacity:0.4;}50%{opacity:1;}}
+.ramo-d2:hover{box-shadow:0 10px 36px rgba(239,68,68,0.3);}
+.ramo-d2:hover::after{animation:none;opacity:0;}
+.ramo-d1{background:linear-gradient(145deg,rgba(40,40,65,0.95),rgba(25,25,45,0.95));border:1px solid rgba(100,116,139,0.35);box-shadow:0 4px 16px rgba(0,0,0,0.28);}
+.ramo-d1:hover{box-shadow:0 10px 32px rgba(0,0,0,0.4);}
+
+.nivel-stripe{height:4px;width:100%;position:absolute;top:0;left:0;border-radius:18px 18px 0 0;}
+.ramo-d5 .nivel-stripe{background:linear-gradient(90deg,#06b6d4,#0ea5e9);}
+.ramo-d4 .nivel-stripe{background:linear-gradient(90deg,#10b981,#34d399);}
+.ramo-d3 .nivel-stripe{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+.ramo-d2 .nivel-stripe{background:linear-gradient(90deg,#ef4444,#f97316);}
+.ramo-d1 .nivel-stripe{background:linear-gradient(90deg,#374151,#4b5563);}
+
+.nivel-badge{display:inline-flex;align-items:center;gap:6px;border-radius:22px;padding:5px 13px;font-size:12px;font-weight:800;letter-spacing:0.04em;border:1px solid;}
+.nivel-badge-d5{background:rgba(6,182,212,0.2);color:#67e8f9;border-color:rgba(6,182,212,0.45);}
+.nivel-badge-d4{background:rgba(16,185,129,0.2);color:#6ee7b7;border-color:rgba(16,185,129,0.45);}
+.nivel-badge-d3{background:rgba(245,158,11,0.2);color:#fcd34d;border-color:rgba(245,158,11,0.45);}
+.nivel-badge-d2{background:rgba(239,68,68,0.2);color:#fca5a5;border-color:rgba(239,68,68,0.5);}
+.nivel-badge-d1{background:rgba(75,85,99,0.4);color:#9ca3af;border-color:rgba(75,85,99,0.6);}
+
+.nota-badge-v2{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;margin:2px;border:1px solid;}
+.nota-badge-v2.con-nota{background:rgba(255,255,255,0.12);color:#f1f5f9;border-color:rgba(255,255,255,0.2);}
+.nota-badge-v2.sin-nota{background:rgba(245,158,11,0.15);color:#fcd34d;border-color:rgba(245,158,11,0.35);}
+.nota-badge-v2.examen{background:rgba(139,92,246,0.18);color:#c4b5fd;border-color:rgba(139,92,246,0.4);}
+.nota-badge-v2.examen-pen{background:rgba(107,114,128,0.18);color:#d1d5db;border-color:rgba(107,114,128,0.35);}
+
+.ramo-stat-box{flex:1;border-radius:10px;padding:10px 8px;text-align:center;}
+.ramo-stat-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:rgba(226,232,240,0.55);margin-bottom:3px;}
+.ramo-stat-value{font-size:22px;font-weight:900;line-height:1;}
+
+.ramo-d5 .stat-final{background:rgba(6,182,212,0.18);border:1px solid rgba(6,182,212,0.3);}
+.ramo-d5 .stat-final .ramo-stat-value{color:#67e8f9;}
+.ramo-d4 .stat-final{background:rgba(16,185,129,0.18);border:1px solid rgba(16,185,129,0.3);}
+.ramo-d4 .stat-final .ramo-stat-value{color:#6ee7b7;}
+.ramo-d3 .stat-final{background:rgba(245,158,11,0.18);border:1px solid rgba(245,158,11,0.3);}
+.ramo-d3 .stat-final .ramo-stat-value{color:#fcd34d;}
+.ramo-d2 .stat-final{background:rgba(239,68,68,0.18);border:1px solid rgba(239,68,68,0.35);}
+.ramo-d2 .stat-final .ramo-stat-value{color:#fca5a5;}
+.ramo-d1 .stat-final{background:rgba(55,65,81,0.5);border:1px solid rgba(75,85,99,0.45);}
+.ramo-d1 .stat-final .ramo-stat-value{color:#d1d5db;}
+.stat-parcial{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);}
+.stat-parcial .ramo-stat-value{color:rgba(241,245,249,0.85);}
+.stat-meta{background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);}
+.stat-meta .ramo-stat-value{color:#fcd34d;}
+
+.meta-progress-bar{height:4px;border-radius:4px;background:rgba(255,255,255,0.1);overflow:hidden;margin:10px 0 4px;}
+.meta-progress-fill{height:100%;border-radius:4px;}
+.ramo-d5 .meta-progress-fill{background:linear-gradient(90deg,#06b6d4,#0ea5e9);}
+.ramo-d4 .meta-progress-fill{background:linear-gradient(90deg,#10b981,#34d399);}
+.ramo-d3 .meta-progress-fill{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+.ramo-d2 .meta-progress-fill{background:linear-gradient(90deg,#ef4444,#f97316);}
+.ramo-d1 .meta-progress-fill{background:linear-gradient(90deg,#374151,#4b5563);}
+
+.ramo-btn{flex:1;border-radius:10px;padding:8px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;transition:background 0.15s,color 0.15s;border:1px solid;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;}
+.ramo-btn-edit{background:rgba(234,88,12,0.15);color:#fb923c;border-color:rgba(234,88,12,0.35);}
+.ramo-btn-edit:hover{background:rgba(234,88,12,0.28);color:#fdba74;text-decoration:none;}
+.ramo-btn-del{background:rgba(220,38,38,0.15);color:#f87171;border-color:rgba(220,38,38,0.35);}
+.ramo-btn-del:hover{background:rgba(220,38,38,0.28);color:#fca5a5;text-decoration:none;}
+.ramo-btn-comp{width:100%;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:transparent;}
+.ramo-btn-comp:hover{opacity:0.88;}
+.ramo-btn-undo{background:rgba(22,163,74,0.15);color:#86efac;border-color:rgba(22,163,74,0.35);}
+.ramo-btn-undo:hover{background:rgba(22,163,74,0.28);}
+.ramo-btn-lock{background:rgba(100,116,139,0.15);color:#cbd5e1;border-color:rgba(100,116,139,0.3);}
+.ramo-btn-lock:hover{background:rgba(100,116,139,0.28);}
+</style>
+
+{% if not semestres %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div style="background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px;text-align:center;">
+                <i class="fas fa-calendar-alt" style="font-size:32px;color:rgba(255,255,255,0.9);margin-bottom:8px;display:block;"></i>
+                <h5 style="color:#fff;margin:0;font-weight:700;">Configura tu sistema académico</h5>
+            </div>
+            <div style="padding:24px;text-align:center;">
+                <p style="color:#64748b;font-size:14px;">Antes de comenzar, necesitas configurar cómo se organiza tu carrera.</p>
+                <a href="{% url 'setup-periodos' %}"
+                   style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;">
+                    <i class="fas fa-rocket me-2"></i>Comenzar configuración
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if semestres %}
+
+<div class="text-center mb-3">
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
+        <h3 id="titulo-semestre" style="color:#fff;font-weight:800;margin:0;font-size:clamp(20px,4vw,28px);">
+            {% if semestre_actual %}
+                <span style="background:linear-gradient(135deg,#a5b4fc,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Mi Espacio Académico</span>
+                — {{ semestre_actual.nombre }}
+            {% else %}
+                Mi Espacio Académico
+            {% endif %}
+        </h3>
+    </div>
+    <div style="margin-top:8px;" id="badge-estado-periodo">
+        {% if semestre_actual.es_actual %}
+        <span style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;box-shadow:0 2px 12px rgba(16,185,129,0.4);">
+            <i class="fas fa-map-marker-alt me-1"></i>Período Actual
+        </span>
+        {% elif semestre_actual.completado_periodo %}
+        <span style="background:rgba(99,102,241,0.15);color:#a5b4fc;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.3);">
+            <i class="fas fa-check-circle me-1"></i>Período Completado
+        </span>
+        {% else %}
+        <span style="background:rgba(234,179,8,0.12);color:#fbbf24;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid rgba(234,179,8,0.3);">
+            <i class="fas fa-clock me-1"></i>Período Pendiente
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- STEPPER -->
+<div class="stepper-container">
+    <div class="stepper-header">
+        <span class="stepper-title">🎓 Tu progreso académico</span>
+        {% with total=semestres_todos|length %}
+        <span class="stepper-progress-text">
+            {{ semestres|length }} / {{ total }} {{ tipo_label }}{% if total != 1 %}s{% endif %} accesibles
+        </span>
+        {% endwith %}
+    </div>
+    <div class="academic-timeline" id="academicTimeline">
+        {% for sem in semestres_todos %}
+            {% if sem.completado_periodo %}
+            <div class="timeline-step completed {% if semestre_actual and sem.id == semestre_actual.id %}selected{% endif %}"
+                 onclick="cambiarSemestre({{ sem.id }}, '{{ sem.nombre }}', 'completed')"
+                 title="{{ sem.nombre }} — Completado">
+                <div class="step-node"><i class="fas fa-check" style="font-size:16px;"></i></div>
+                <div class="step-label">{{ sem.nombre }}</div>
+                <div class="step-status">Completado</div>
+            </div>
+            {% elif sem.es_actual %}
+            <div class="timeline-step current {% if semestre_actual and sem.id == semestre_actual.id %}selected{% endif %}"
+                 onclick="cambiarSemestre({{ sem.id }}, '{{ sem.nombre }}', 'current')"
+                 title="{{ sem.nombre }} — Período Actual">
+                <div class="step-node">{{ sem.orden }}</div>
+                <div class="step-label">{{ sem.nombre }}</div>
+                <div class="step-status">Actual</div>
+            </div>
+            {% elif sem.orden <= semestre_actual.orden %}
+            <div class="timeline-step pending {% if semestre_actual and sem.id == semestre_actual.id %}selected{% endif %}"
+                 onclick="cambiarSemestre({{ sem.id }}, '{{ sem.nombre }}', 'pending')"
+                 title="{{ sem.nombre }} — Pendiente de cerrar">
+                <div class="step-node">{{ sem.orden }}</div>
+                <div class="step-label">{{ sem.nombre }}</div>
+                <div class="step-status">Pendiente</div>
+            </div>
+            {% else %}
+            <div class="timeline-step future" title="Aún no disponible">
+                <div class="step-node">{{ sem.orden }}</div>
+                <div class="step-label">{{ sem.nombre }}</div>
+                <div class="step-status">🔒</div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- CONTENIDO POR SEMESTRE -->
+{% for semestre in semestres %}
+<div id="contenido-semestre-{{ semestre.id }}"
+     style="{% if not semestre_actual or semestre.id != semestre_actual.id %}display:none;{% endif %}">
+
+    {% with ramos=ramos_por_semestre|get_item:semestre.id %}
+
+    {% if not semestre.es_actual and not semestre.completado_periodo %}
+        {% if ramos %}
+            {% if puede_cerrar_por_semestre|get_item:semestre.id %}
+            <div class="banner-cerrar-anterior">
+                <div style="font-size:28px;margin-bottom:10px;">🎉</div>
+                <h5 style="color:#fbbf24;font-weight:800;margin-bottom:6px;">{{ semestre.nombre }} — ¡Listo para cerrar!</h5>
+                <p style="color:rgba(255,255,255,0.55);font-size:13px;margin-bottom:16px;">Todos los ramos están completados. Puedes cerrar este período.</p>
+                <button onclick="cerrarPeriodoAnterior({{ semestre.id }}, '{{ semestre.nombre }}')"
+                        style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border:none;border-radius:20px;padding:11px 28px;font-weight:700;font-size:13px;cursor:pointer;transition:transform 0.2s,opacity 0.2s;"
+                        onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <i class="fas fa-flag-checkered me-2"></i>Cerrar {{ tipo_label }} y marcar como completado
+                </button>
+            </div>
+            {% else %}
+            <div class="banner-cerrar-anterior">
+                <div style="font-size:28px;margin-bottom:10px;">📋</div>
+                <h5 style="color:#fbbf24;font-weight:800;margin-bottom:6px;">{{ semestre.nombre }} — Pendiente</h5>
+                <div style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:12px;text-align:left;max-width:360px;margin-left:auto;margin-right:auto;">
+                    <p style="margin-bottom:8px;font-weight:600;color:rgba(255,255,255,0.65);">Para cerrar este período necesitas:</p>
+                    <div id="req-limite-{{ semestre.id }}" style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                        <span id="icon-limite-{{ semestre.id }}">⏳</span>
+                        <span id="text-limite-{{ semestre.id }}">Configurar el límite de ramos</span>
+                    </div>
+                    <div id="req-cantidad-{{ semestre.id }}" style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                        <span id="icon-cantidad-{{ semestre.id }}">⏳</span>
+                        <span id="text-cantidad-{{ semestre.id }}">Agregar todos los ramos del período</span>
+                    </div>
+                    <div id="req-completados-{{ semestre.id }}" style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                        <span id="icon-completados-{{ semestre.id }}">⏳</span>
+                        <span id="text-completados-{{ semestre.id }}">Marcar todos los ramos como completados</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    {% if ramos %}
+        <div class="row g-3">
+            {% for ramo in ramos %}
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="ramo-card-v2 {% if ramo.nivel == 5 %}ramo-d5{% elif ramo.nivel == 4 %}ramo-d4{% elif ramo.nivel == 3 %}ramo-d3{% elif ramo.nivel == 2 %}ramo-d2{% else %}ramo-d1{% endif %} {% if ramo.bloqueado %}bloqueado{% endif %}">
+                    <div class="nivel-stripe"></div>
+                    <div style="padding:22px 18px 16px;">
+
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+                            <span class="nivel-badge {% if ramo.nivel == 5 %}nivel-badge-d5{% elif ramo.nivel == 4 %}nivel-badge-d4{% elif ramo.nivel == 3 %}nivel-badge-d3{% elif ramo.nivel == 2 %}nivel-badge-d2{% else %}nivel-badge-d1{% endif %}">
+                                {% if ramo.nivel == 5 %}✅{% elif ramo.nivel == 4 %}📈{% elif ramo.nivel == 3 %}⚠️{% elif ramo.nivel == 2 %}🚨{% else %}❌{% endif %}
+                                Nivel {{ ramo.nivel }} · {% if ramo.nivel == 5 %}Aprobado{% elif ramo.nivel == 4 %}Bien encaminado{% elif ramo.nivel == 3 %}Ajustado{% elif ramo.nivel == 2 %}En riesgo{% else %}Reprobado{% endif %}
+                            </span>
+                            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                                {% if ramo.bloqueado %}
+                                <span style="background:rgba(100,116,139,0.2);color:#cbd5e1;font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;border:1px solid rgba(100,116,139,0.35);">🔒 Archivado</span>
+                                {% elif ramo.completado %}
+                                <span style="background:rgba(22,163,74,0.18);color:#86efac;font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;border:1px solid rgba(22,163,74,0.35);">✓ Completado</span>
+                                {% endif %}
+                                {% if ramo.meta_promedio %}
+                                <span style="background:rgba(245,158,11,0.18);color:#fcd34d;font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;border:1px solid rgba(245,158,11,0.35);">⭐ Meta {{ ramo.meta_promedio|floatformat:1 }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <h6 style="margin:0 0 12px;font-weight:800;color:#f8fafc;font-size:16px;letter-spacing:-0.01em;">{{ ramo.nombre }}</h6>
+
+                        <div style="margin-bottom:12px;min-height:24px;">
+                            {% for n in ramo.notas %}
+                                {% if n.nota and n.nota != 0.0 %}
+                                <span class="nota-badge-v2 con-nota">{{ n.nota|floatformat:1 }} <span style="opacity:0.6;">({{ n.porcentaje|floatformat:0 }}%)</span></span>
+                                {% else %}
+                                <span class="nota-badge-v2 sin-nota">⏳ <span style="opacity:0.7;">({{ n.porcentaje|floatformat:0 }}%)</span></span>
+                                {% endif %}
+                            {% endfor %}
+                            {% if ramo.examen and ramo.examen.nota and ramo.examen.nota != 0.0 %}
+                            <span class="nota-badge-v2 examen">📝 {{ ramo.examen.nota|floatformat:1 }} <span style="opacity:0.6;">({{ ramo.examen.porcentaje|floatformat:0 }}%)</span></span>
+                            {% elif ramo.examen and ramo.examen.porcentaje %}
+                            <span class="nota-badge-v2 examen-pen">📝 Examen ⏳ <span style="opacity:0.6;">({{ ramo.examen.porcentaje|floatformat:0 }}%)</span></span>
+                            {% endif %}
+                        </div>
+
+                        {% if ramo.meta_promedio %}
+                        <div class="meta-progress-bar">
+                            <div class="meta-progress-fill" style="width:{% widthratio ramo.promedio_final ramo.meta_promedio 100 %}%;max-width:100%;"></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(226,232,240,0.45);margin-bottom:10px;">
+                            <span>0</span><span>Meta {{ ramo.meta_promedio|floatformat:1 }}</span>
+                        </div>
+                        {% endif %}
+
+                        <div style="display:flex;gap:8px;margin-bottom:14px;">
+                            <div class="ramo-stat-box stat-parcial">
+                                <div class="ramo-stat-label">Parcial</div>
+                                <div class="ramo-stat-value">{{ ramo.promedio_parcial_display }}</div>
+                            </div>
+                            <div class="ramo-stat-box stat-final">
+                                <div class="ramo-stat-label">Final</div>
+                                <div class="ramo-stat-value">{{ ramo.promedio_final_display }}</div>
+                            </div>
+                            {% if ramo.meta_promedio %}
+                            <div class="ramo-stat-box stat-meta">
+                                <div class="ramo-stat-label">Meta</div>
+                                <div class="ramo-stat-value">{{ ramo.meta_promedio|floatformat:1 }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div style="border-top:1px solid rgba(255,255,255,0.1);margin-bottom:12px;"></div>
+
+                        {% if ramo.bloqueado %}
+                        <div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:9px;text-align:center;color:rgba(203,213,225,0.6);font-size:12px;">
+                            <i class="fas fa-lock me-1"></i>Ramo archivado — solo lectura
+                        </div>
+                        {% elif ramo.completado %}
+                        <div style="display:flex;gap:8px;margin-bottom:8px;">
+                            <a href="{% url 'editar-ramo' ramo.id %}" class="ramo-btn ramo-btn-edit"><i class="fas fa-edit"></i> Editar</a>
+                            <a href="{% url 'eliminar-ramo' ramo.id %}" onclick="return confirm('¿Seguro que quieres eliminar {{ ramo.nombre }}?')" class="ramo-btn ramo-btn-del"><i class="fas fa-trash"></i> Eliminar</a>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button onclick="descompletar({{ ramo.id }})" class="ramo-btn ramo-btn-undo"><i class="fas fa-undo me-1"></i>Descompletar</button>
+                            <button onclick="confirmarBloqueo({{ ramo.id }}, '{{ ramo.nombre }}')" class="ramo-btn ramo-btn-lock"><i class="fas fa-lock me-1"></i>Bloquear</button>
+                        </div>
+                        {% else %}
+                        <div style="display:flex;gap:8px;margin-bottom:8px;">
+                            <a href="{% url 'editar-ramo' ramo.id %}" class="ramo-btn ramo-btn-edit"><i class="fas fa-edit"></i> Editar</a>
+                            <a href="{% url 'eliminar-ramo' ramo.id %}" onclick="return confirm('¿Seguro que quieres eliminar {{ ramo.nombre }}?')" class="ramo-btn ramo-btn-del"><i class="fas fa-trash"></i> Eliminar</a>
+                        </div>
+                        <button onclick="marcarCompletado({{ ramo.id }})" class="ramo-btn ramo-btn-comp" style="padding:9px;">
+                            <i class="fas fa-check-circle me-1"></i>Marcar como completado
+                        </button>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="text-align: center; margin-top: 24px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+            <a href="{% url 'crear-ramo' %}?semestre_id={{ semestre.id }}" class="btn" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:12px 28px;border-radius:24px;border:none;font-size:13px;font-weight:700;box-shadow:0 10px 20px rgba(79, 70, 229, 0.2);display:inline-flex;align-items:center;">
+                <i class="fas fa-plus me-2"></i>Agregar otro ramo
+            </a>
+            <button type="button" onclick="document.getElementById('input-scan-image-{{ semestre.id }}').click()"
+                    id="btn-scan-{{ semestre.id }}"
+                    style="background:rgba(99,102,241,0.15);color:#a5b4fc;border:1.5px solid rgba(99,102,241,0.3);padding:12px 28px;border-radius:24px;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);box-shadow: 0 4px 15px rgba(0,0,0,0.2);"
+                    onmouseover="this.style.transform='translateY(-3px)'; this.style.background='rgba(99,102,241,0.25)';" 
+                    onmouseout="this.style.transform='translateY(0)'; this.style.background='rgba(99,102,241,0.15)';"
+                    title="Escanear horario con inteligencia artificial">
+                <i class="fas fa-magic me-2"></i>Escanear Horario con IA
+            </button>
+            <input type="file" id="input-scan-image-{{ semestre.id }}" accept="image/*" style="display:none" onchange="procesarImagenEscaneo(event, {{ semestre.id }})" />
+        </div>
+
+    {% else %}
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:60px 48px;text-align:center;">
+            <div style="width:72px;height:72px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
+                <i class="fas fa-book-open" style="font-size:28px;color:rgba(99,102,241,0.4);"></i>
+            </div>
+            <h5 style="color:rgba(255,255,255,0.7);font-weight:700;margin-bottom:6px;">No hay ramos en este {{ tipo_label|lower }}</h5>
+            <p style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:22px;">Agrega un ramo usando el menú lateral o el botón de abajo</p>
+            
+            <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+                <button onclick="manejarCrearPrimerRamo({{ semestre.id }})"
+                        style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:12px 28px;border-radius:22px;border:none;font-size:13px;font-weight:700;cursor:pointer;display:inline-block;transition:transform 0.2s;"
+                        onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <i class="fas fa-plus me-2"></i>Crear primer ramo
+                </button>
+                <button type="button" onclick="document.getElementById('input-scan-image-{{ semestre.id }}').click()"
+                        style="background:rgba(99,102,241,0.15);color:#a5b4fc;border:1.5px solid rgba(99,102,241,0.3);padding:12px 28px;border-radius:24px;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;transition:all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);box-shadow: 0 4px 15px rgba(0,0,0,0.2);"
+                        onmouseover="this.style.transform='translateY(-3px)'; this.style.background='rgba(99,102,241,0.25)';" 
+                        onmouseout="this.style.transform='translateY(0)'; this.style.background='rgba(99,102,241,0.15)';"
+                        title="Escanear horario con inteligencia artificial">
+                    <i class="fas fa-magic me-2"></i>Escanear Horario con IA
+                </button>
+                <input type="file" id="input-scan-image-{{ semestre.id }}" accept="image/*" style="display:none" onchange="procesarImagenEscaneo(event, {{ semestre.id }})" />
+            </div>
+        </div>
+    {% endif %}
+
+    {% endwith %}
+</div>
+{% endfor %}
+
+{% if puede_cerrar_actual and hay_siguiente_periodo %}
+<div class="text-center mt-4">
+    <div style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(52,211,153,0.05));border-radius:20px;padding:28px;border:1px solid rgba(16,185,129,0.2);max-width:520px;margin:0 auto;">
+        <div style="font-size:36px;margin-bottom:10px;">🎉</div>
+        <h5 style="color:#e2e8f0;font-weight:800;margin-bottom:8px;">¡Todos los ramos completados!</h5>
+        <p style="color:#94a3b8;font-size:13px;margin-bottom:20px;">Ya puedes cerrar este {{ tipo_label|lower }} y avanzar al siguiente.</p>
+        <button onclick="avanzarPeriodo()"
+                style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border:none;border-radius:20px;padding:13px 32px;font-weight:700;font-size:14px;cursor:pointer;transition:transform 0.2s;"
+                onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <i class="fas fa-arrow-right me-2"></i>Cerrar {{ tipo_label|lower }} y avanzar al siguiente
+        </button>
+    </div>
+</div>
+{% endif %}
+
+{% endif %}
+
+<div id="overlay-limite">
+    <div class="modal-limite-card">
+        <div style="text-align:center;margin-bottom:24px;">
+            <div style="width:56px;height:56px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <i class="fas fa-layer-group" style="color:#fff;font-size:22px;"></i>
+            </div>
+            <h5 id="modal-limite-titulo" style="color:#e2e8f0;font-weight:800;margin-bottom:8px;font-size:17px;line-height:1.4;"></h5>
+            <p style="color:#64748b;font-size:13px;margin:0;line-height:1.6;">
+                Esto nos ayuda a mostrarte el límite correcto para este período.<br>
+                <span style="color:rgba(148,163,184,0.4);font-size:11px;">Si no defines el límite ahora, no podrás agregar ramos en este período.</span>
+            </p>
+        </div>
+        <div id="modal-limite-botones" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:20px;"></div>
+        <button onclick="cerrarModalLimite()"
+                style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(148,163,184,0.5);border-radius:12px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;transition:background 0.2s;"
+                onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+            Saltar por ahora (no podrás agregar ramos)
+        </button>
+    </div>
+</div>
+
+<!-- Modal Escáner Web -->
+<div id="overlay-scanner" style="position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99999;display:none;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#1f1f1f;border:1px solid #303030;border-radius:20px;max-width:400px;width:100%;overflow:hidden;display:flex;flex-direction:column;max-height:80vh;">
+        <div style="padding:16px;border-bottom:1px solid #303030;display:flex;justify-content:space-between;align-items:center;">
+            <h5 style="color:white;margin:0;font-weight:700;font-size:16px;"><i class="fas fa-camera" style="color:#a5b4fc;"></i> Escáner IA</h5>
+            <button onclick="cerrarScanner()" style="background:transparent;border:none;color:#9ca3af;cursor:pointer;"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div style="padding:20px;flex-grow:1;overflow-y:auto;" id="scanner-content">
+            <!-- Loading -->
+            <div id="scanner-loading" style="text-align:center;padding:30px 0;">
+                <i class="fas fa-circle-notch fa-spin" style="font-size:36px;color:#a5b4fc;margin-bottom:16px;"></i>
+                <h6 style="color:white;font-weight:700;margin-bottom:4px;">Analizando Imagen...</h6>
+                <p style="color:rgba(255,255,255,0.5);font-size:13px;margin:0;">Buscando asignaturas en tu horario</p>
+            </div>
+            
+            <!-- Resultado -->
+            <div id="scanner-result" style="display:none;">
+                <h6 style="color:white;font-size:14px;font-weight:700;margin-bottom:12px;border-bottom:1px solid #303030;padding-bottom:8px;">
+                    Ramos Detectados (<span id="scanner-count">0</span>)
+                </h6>
+                <div id="scanner-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+            
+            <!-- Error -->
+            <div id="scanner-error" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);padding:12px;border-radius:12px;color:#fca5a5;font-size:13px;text-align:center;">
+            </div>
+        </div>
+        
+        <div id="scanner-footer" style="padding:16px;border-top:1px solid #303030;display:none;gap:12px;">
+            <button onclick="cerrarScanner()" style="flex:1;background:transparent;border:1px solid #404040;color:#d1d5db;border-radius:12px;padding:10px;font-weight:600;font-size:13px;cursor:pointer;">Cancelar</button>
+            <button onclick="confirmarRamosEscaneados()" id="scanner-confirm-btn" style="flex:1;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;border-radius:12px;padding:10px;font-weight:600;font-size:13px;cursor:pointer;">Confirmar Todo</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var semestre_activo = {{ semestre_actual.id|default:"null" }};
+const tipoLabel = "{{ tipo_label }}";
+const maxRamosTipo = {{ max_ramos_tipo|default:8 }};
+
+const periodosLimite = {
+    {% for s in semestres %}
+    "{{ s.id }}": {
+        limite: {{ s.limite_ramos|default:"null" }},
+        nombre: "{{ s.nombre }}",
+        esActual: {{ s.es_actual|yesno:"true,false" }},
+        totalRamos: {{ ramos_por_semestre|get_item:s.id|length }}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+};
+
+const puedeCerrarPorSemestre = {
+    {% for s in semestres %}
+    "{{ s.id }}": {{ puede_cerrar_por_semestre|get_item:s.id|yesno:"true,false" }}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+};
+
+var pendingRedirect = null;
+
+function getCookie(n){let v=null;document.cookie.split(';').forEach(c=>{c=c.trim();if(c.startsWith(n+'='))v=decodeURIComponent(c.slice(n.length+1));});return v;}
+
+function mostrarModalLimite(id, redirectUrl) {
+    if (!id) return;
+    const info = periodosLimite[String(id)];
+    if (!info) return;
+    if (info.limite !== null && info.limite !== undefined) return;
+    pendingRedirect = redirectUrl || null;
+    const titulo = info.esActual ? `¿Cuántos ramos tienes en tu ${tipoLabel} actual?` : `¿Cuántos ramos tuviste en el ${info.nombre}?`;
+    document.getElementById('modal-limite-titulo').textContent = titulo;
+    const cont = document.getElementById('modal-limite-botones');
+    cont.innerHTML = '';
+    for (let i = 1; i <= maxRamosTipo; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.className = 'limite-btn-num';
+        btn.onclick = () => guardarLimitePeriodo(id, i, info.nombre);
+        cont.appendChild(btn);
+    }
+    document.getElementById('overlay-limite').classList.add('visible');
+}
+
+function cerrarModalLimite() {
+    document.getElementById('overlay-limite').classList.remove('visible');
+    pendingRedirect = null;
+}
+
+async function guardarLimitePeriodo(semestreId, limite, nombre) {
+    try {
+        const res = await fetch('/set-limite-periodo/', {
+            method:'POST', headers:{'X-CSRFToken':getCookie('csrftoken'),'Content-Type':'application/json'},
+            body:JSON.stringify({ semestre_id: semestreId, limite: limite })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            if (periodosLimite[String(semestreId)]) periodosLimite[String(semestreId)].limite = limite;
+            cerrarModalLimite();
+            if (window.showToast) window.showToast(`Límite de <strong>${limite} ramos</strong> guardado para ${nombre}.`, 'success');
+            actualizarRequisitosBanner(semestreId);
+            if (pendingRedirect) { const url = pendingRedirect; pendingRedirect = null; setTimeout(() => { window.location.href = url; }, 600); }
+        } else {
+            cerrarModalLimite();
+            if (window.showToast) window.showToast(data.error || 'Error al guardar el límite.', 'danger');
+        }
+    } catch (e) { cerrarModalLimite(); if (window.showToast) window.showToast('Error de conexión.', 'danger'); }
+}
+
+document.getElementById('overlay-limite').addEventListener('click', function(e) { if (e.target === this) cerrarModalLimite(); });
+
+function manejarCrearPrimerRamo(semestreId) {
+    const info = periodosLimite[String(semestreId)];
+    if (!info) return;
+    if (info.limite !== null && info.limite !== undefined) { window.location.href = '/crear_ramo/?semestre_id=' + semestreId; }
+    else { mostrarModalLimite(semestreId, '/crear_ramo/?semestre_id=' + semestreId); }
+}
+
+function cambiarSemestre(id, nombre, estado) {
+    if (semestre_activo) { const anterior = document.getElementById('contenido-semestre-' + semestre_activo); if (anterior) anterior.style.display = 'none'; }
+    document.querySelectorAll('.timeline-step').forEach(el => el.classList.remove('selected'));
+    const nuevo = document.getElementById('contenido-semestre-' + id);
+    if (nuevo) nuevo.style.display = 'block';
+    document.querySelectorAll('.timeline-step').forEach(el => {
+        const oc = el.getAttribute('onclick') || '';
+        if (oc.includes('cambiarSemestre(' + id + ',')) el.classList.add('selected');
+    });
+    document.getElementById('titulo-semestre').innerHTML =
+        '<span style="background:linear-gradient(135deg,#a5b4fc,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Mi Espacio Académico</span> — ' + nombre;
+    const badge = document.getElementById('badge-estado-periodo');
+    if (badge) {
+        if (estado === 'current') badge.innerHTML = '<span style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;"><i class="fas fa-map-marker-alt me-1"></i>Período Actual</span>';
+        else if (estado === 'completed') badge.innerHTML = '<span style="background:rgba(99,102,241,0.15);color:#a5b4fc;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid rgba(99,102,241,0.3);"><i class="fas fa-check-circle me-1"></i>Período Completado</span>';
+        else badge.innerHTML = '<span style="background:rgba(234,179,8,0.12);color:#fbbf24;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid rgba(234,179,8,0.3);"><i class="fas fa-clock me-1"></i>Período Pendiente</span>';
+    }
+    semestre_activo = id;
+    history.pushState(null, '', '/mi_periodo/?semestre=' + id);
+    actualizarRequisitosBanner(id);
+    mostrarModalLimite(id, null);
+}
+
+function actualizarRequisitosBanner(id) {
+    const info = periodosLimite[String(id)];
+    if (!info) return;
+    const iconLimite   = document.getElementById('icon-limite-'   + id);
+    const textLimite   = document.getElementById('text-limite-'   + id);
+    const iconCantidad = document.getElementById('icon-cantidad-' + id);
+    const textCantidad = document.getElementById('text-cantidad-' + id);
+    const iconComp     = document.getElementById('icon-completados-' + id);
+    const textComp     = document.getElementById('text-completados-' + id);
+    if (!iconLimite) return;
+    const tieneLimite   = info.limite !== null && info.limite !== undefined;
+    const cantidadOk    = tieneLimite && info.totalRamos >= info.limite;
+    const completadosOk = puedeCerrarPorSemestre[String(id)] === true;
+    iconLimite.textContent = tieneLimite ? '✅' : '⏳';
+    textLimite.textContent = tieneLimite ? `Límite configurado: ${info.limite} ramos` : 'Configurar el límite de ramos';
+    textLimite.style.color = tieneLimite ? 'rgba(74,222,128,0.8)' : 'rgba(255,255,255,0.5)';
+    iconCantidad.textContent = cantidadOk ? '✅' : '⏳';
+    textCantidad.textContent = tieneLimite ? (cantidadOk ? `Ramos completos: ${info.totalRamos}/${info.limite}` : `Faltan ramos: tienes ${info.totalRamos} de ${info.limite}`) : 'Agregar todos los ramos del período';
+    textCantidad.style.color = cantidadOk ? 'rgba(74,222,128,0.8)' : 'rgba(255,255,255,0.5)';
+    iconComp.textContent = completadosOk ? '✅' : '⏳';
+    textComp.textContent = completadosOk ? 'Todos los ramos marcados como completados' : 'Marcar todos los ramos como completados';
+    textComp.style.color = completadosOk ? 'rgba(74,222,128,0.8)' : 'rgba(255,255,255,0.5)';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const timeline = document.getElementById('academicTimeline');
+    const selected = timeline ? timeline.querySelector('.timeline-step.selected, .timeline-step.current') : null;
+    if (selected && timeline) setTimeout(() => selected.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' }), 200);
+    if (semestre_activo) actualizarRequisitosBanner(semestre_activo);
+    setTimeout(() => mostrarModalLimite(semestre_activo, null), 600);
+});
+
+async function marcarCompletado(ramoId) {
+    try { const res = await fetch(`/marcar-completado-ramo/${ramoId}/`,{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken'),'Content-Type':'application/json'},body:JSON.stringify({})});const data=await res.json();if(data.ok){location.reload();}else{if(window.showToast)window.showToast(data.error||'Error.','danger');} }
+    catch(e){if(window.showToast)window.showToast('Error de conexión.','danger');}
+}
+async function descompletar(ramoId) {
+    try { const res = await fetch(`/marcar-completado-ramo/${ramoId}/`,{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken'),'Content-Type':'application/json'},body:JSON.stringify({})});const data=await res.json();if(data.ok){location.reload();}else{if(window.showToast)window.showToast(data.error||'Error.','danger');} }
+    catch(e){if(window.showToast)window.showToast('Error de conexión.','danger');}
+}
+function confirmarBloqueo(ramoId,nombre){if(confirm(`⚠️ ¿Bloquear "${nombre}"?\n\nEsta acción es IRREVERSIBLE.`))bloquearRamo(ramoId);}
+async function bloquearRamo(ramoId){
+    try{const res=await fetch(`/bloquear-ramo/${ramoId}/`,{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken'),'Content-Type':'application/json'},body:JSON.stringify({})});const data=await res.json();if(data.ok){location.reload();}else{if(window.showToast)window.showToast(data.error||'Error.','danger');}}
+    catch(e){if(window.showToast)window.showToast('Error de conexión.','danger');}
+}
+async function avanzarPeriodo(){
+    if(!confirm('¿Cerrar este período y avanzar al siguiente?'))return;
+    try{const res=await fetch('/avanzar-periodo/',{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken'),'Content-Type':'application/json'},body:JSON.stringify({})});const data=await res.json();if(data.ok){window.location.href='/mi_periodo/?semestre='+data.nuevo_id;}else{if(window.showToast)window.showToast(data.error||'Error al avanzar.','danger');}}
+    catch(e){if(window.showToast)window.showToast('Error de conexión.','danger');}
+}
+async function cerrarPeriodoAnterior(semestreId,nombre){
+    if(!confirm(`¿Cerrar "${nombre}" y marcarlo como completado?`))return;
+    try{const res=await fetch('/cerrar-periodo-anterior/',{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken'),'Content-Type':'application/json'},body:JSON.stringify({semestre_id:semestreId})});const data=await res.json();if(data.ok){if(window.showToast)window.showToast(`"${data.nombre}" marcado como completado.`,'success');setTimeout(()=>location.reload(),1200);}else{if(window.showToast)window.showToast(data.error||'Error al cerrar el período.','danger');}}
+    catch(e){if(window.showToast)window.showToast('Error de conexión.','danger');}
+}
+
+// ============== LOGICA ESCANER IA ==============
+let scannerRamos = [];
+let scannerSemestreId = null;
+
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+async function procesarImagenEscaneo(e, semestreId) {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    // Reseteo
+    e.target.value = '';
+    scannerSemestreId = semestreId;
+    scannerRamos = [];
+    
+    // UI
+    document.getElementById('overlay-scanner').style.display = 'flex';
+    document.getElementById('scanner-loading').style.display = 'block';
+    document.getElementById('scanner-result').style.display = 'none';
+    document.getElementById('scanner-error').style.display = 'none';
+    document.getElementById('scanner-footer').style.display = 'none';
+    
+    try {
+        const base64 = await fileToBase64(file);
+        
+        const res = await fetch('/api/movil/scan_horario/', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+            body: JSON.stringify({ image_base64: base64 })
+        });
+        
+        const data = await res.json();
+        if(data.ok && data.ramos) {
+            scannerRamos = data.ramos;
+            renderScannerList();
+            
+            document.getElementById('scanner-loading').style.display = 'none';
+            document.getElementById('scanner-result').style.display = 'block';
+            document.getElementById('scanner-footer').style.display = 'flex';
+        } else {
+            throw new Error(data.error || 'Error desconocido al analizar la imagen.');
+        }
+        
+    } catch(err) {
+        document.getElementById('scanner-loading').style.display = 'none';
+        document.getElementById('scanner-error').style.display = 'block';
+        document.getElementById('scanner-error').textContent = err.message;
+    }
+}
+
+function renderScannerList() {
+    const container = document.getElementById('scanner-list');
+    container.innerHTML = '';
+    document.getElementById('scanner-count').textContent = scannerRamos.length;
+    
+    const btnConfirm = document.getElementById('scanner-confirm-btn');
+    if(scannerRamos.length === 0) {
+        container.innerHTML = '<p style="color:gray;text-align:center;font-size:13px;padding:10px 0;">Todos los ramos han sido eliminados.</p>';
+        btnConfirm.disabled = true;
+        btnConfirm.style.opacity = '0.5';
+        return;
+    }
+    
+    btnConfirm.disabled = false;
+    btnConfirm.style.opacity = '1';
+    
+    scannerRamos.forEach((ramo, index) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'background:#141414;border:1px solid #2b2b2b;padding:10px 12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;';
+        
+        const text = document.createElement('span');
+        text.style.cssText = 'color:#e5e7eb;font-size:13px;font-weight:600;';
+        text.textContent = ramo;
+        
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        delBtn.style.cssText = 'background:transparent;border:none;color:#ef4444;cursor:pointer;padding:4px;';
+        delBtn.onclick = () => {
+            scannerRamos.splice(index, 1);
+            renderScannerList();
+        };
+        
+        item.appendChild(text);
+        item.appendChild(delBtn);
+        container.appendChild(item);
+    });
+}
+
+function cerrarScanner() {
+    document.getElementById('overlay-scanner').style.display = 'none';
+    scannerRamos = [];
+}
+
+async function confirmarRamosEscaneados() {
+    if(!scannerSemestreId || scannerRamos.length === 0) return;
+    
+    const btnConfirm = document.getElementById('scanner-confirm-btn');
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    
+    try {
+        const res = await fetch('/api/movil/crear_ramos_masivo/', {
+            method: 'POST',
+            headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                semestre_id: scannerSemestreId,
+                ramos_names: scannerRamos
+            })
+        });
+        
+        const data = await res.json();
+        if(data.ok) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Error al guardar los ramos.');
+            btnConfirm.disabled = false;
+            btnConfirm.innerHTML = 'Confirmar Todo';
+        }
+    } catch(err) {
+        alert('Error de conexión.');
+        btnConfirm.disabled = false;
+        btnConfirm.innerHTML = 'Confirmar Todo';
+    }
+}
+</script>
+{% endblock %}

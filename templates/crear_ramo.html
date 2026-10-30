@@ -1,0 +1,460 @@
+{% extends "base/base.html" %}
+{% load l10n %}
+
+{% block titulo %}Crear Ramo — {{ user.username }}{% endblock %}
+
+{% block contenido %}
+
+<style>
+#overlay-limite-cr {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 99990; display: none;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(6px); padding: 16px;
+}
+#overlay-limite-cr.visible { display: flex; }
+.modal-limite-card-cr {
+    background: linear-gradient(145deg, #1a1a2e, #0d0d22);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 24px; padding: 36px 32px 28px;
+    max-width: 460px; width: 100%;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+    animation: modalInCr 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modalInCr {
+    from { opacity:0; transform: scale(0.9) translateY(20px); }
+    to   { opacity:1; transform: scale(1) translateY(0); }
+}
+.limite-btn-num-cr {
+    width: 54px; height: 54px;
+    background: rgba(99,102,241,0.1);
+    border: 1.5px solid rgba(99,102,241,0.22);
+    border-radius: 14px; color: #a5b4fc;
+    font-size: 17px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+}
+.limite-btn-num-cr:hover {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-color: transparent; color: #fff;
+    transform: translateY(-2px);
+}
+#aviso-sin-limite {
+    display: none;
+    background: rgba(234,179,8,0.1);
+    border: 1px solid rgba(234,179,8,0.3);
+    border-radius: 10px; padding: 10px 14px;
+    margin-top: 8px; font-size: 12px;
+    color: #fbbf24; font-weight: 600;
+}
+
+/* ── INPUTS OSCUROS ── */
+.cr-input {
+    background-color: rgba(255,255,255,0.06) !important;
+    background-image: none !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 10px !important;
+    color: #e2e8f0 !important;
+    font-size: 14px !important;
+    padding: 11px 14px !important;
+    width: 100%;
+    display: block;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+.cr-input:focus {
+    border-color: rgba(99,102,241,0.5) !important;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.13) !important;
+    background-color: rgba(255,255,255,0.09) !important;
+    outline: none !important;
+    color: #e2e8f0 !important;
+}
+.cr-input::placeholder { color: rgba(100,116,139,0.5) !important; }
+.cr-input option {
+    background: #1a1a2e !important;
+    color: #e2e8f0 !important;
+}
+
+/* ── SELECT: una sola flecha morada, sin nada de Bootstrap ── */
+select.cr-input {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23818cf8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 13px center !important;
+    background-size: 14px 10px !important;
+    padding-right: 40px !important;
+    cursor: pointer;
+}
+</style>
+
+<div class="row justify-content-center g-4">
+
+    <!-- FORMULARIO -->
+    <div class="col-12 col-lg-7">
+        <div style="background:rgba(13,13,30,0.92);border:1px solid rgba(99,102,241,0.15);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px 32px;">
+                <h4 style="color:#fff;margin:0;font-weight:700;">
+                    <i class="fas fa-plus-circle me-2"></i>Crear Ramo
+                </h4>
+                <p style="color:rgba(255,255,255,0.75);margin:4px 0 0;font-size:13px;">Completa los datos de tu asignatura</p>
+            </div>
+
+            <form method="POST" id="formRamo" style="padding:28px 32px;">
+                {% csrf_token %}
+
+                <!-- PASO 1 -->
+                <div class="mb-4">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                        <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">1</div>
+                        <h6 style="margin:0;font-weight:700;color:#f1f5f9;">Información del ramo</h6>
+                    </div>
+
+                    <div class="mb-3">
+                        <label style="font-size:11px;font-weight:700;color:rgba(148,163,184,0.55);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;display:block;">Nombre del ramo *</label>
+                        <input type="text" name="nombre" id="inputNombre" class="cr-input" required
+                               placeholder="Ej: Matemáticas, Programación, Historia..."
+                               oninput="actualizarPreview()">
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label style="font-size:11px;font-weight:700;color:rgba(148,163,184,0.55);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;display:block;">{{ TIPO_LABEL|default:"Período" }} *</label>
+                            <!-- SOLO cr-input, sin form-select → una sola flecha morada -->
+                            <select name="semestre" id="selectSemestre" class="cr-input" required
+                                    onchange="verificarLimiteSemestre(this.value)">
+                                <option value="">Selecciona un {{ TIPO_LABEL|default:"período"|lower }}</option>
+                                {% for semestre in semestres %}
+                                    <option value="{{ semestre.id }}"
+                                        {% if semestre.id|stringformat:"s" == semestre_preseleccionado %}selected{% endif %}>
+                                        {{ semestre.nombre }}{% if semestre.es_actual %} (Actual){% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small style="color:rgba(148,163,184,0.45);font-size:11px;display:block;margin-top:4px;">
+                                Solo se muestran los períodos desbloqueados.
+                            </small>
+                            <div id="aviso-sin-limite">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Sin límite configurado. Se te pedirá definirlo al guardar.
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label style="font-size:11px;font-weight:700;color:rgba(148,163,184,0.55);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;display:block;">
+                                Meta de promedio
+                                <span style="color:rgba(148,163,184,0.35);font-weight:400;text-transform:none;letter-spacing:0;">(opcional)</span>
+                            </label>
+                            <input type="number" name="meta_promedio" id="inputMeta"
+                                   step="0.1" min="1.0" max="7.0"
+                                   placeholder="Ej: 5.5"
+                                   class="cr-input"
+                                   oninput="actualizarPreview()">
+                            <small style="color:rgba(148,163,184,0.45);font-size:11px;display:block;margin-top:4px;">
+                                La IA calculará qué notas necesitas para alcanzarla.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="border-color:rgba(255,255,255,0.07);">
+
+                <!-- PASO 2 -->
+                <div class="mb-4">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                        <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">2</div>
+                        <h6 style="margin:0;font-weight:700;color:#f1f5f9;">Evaluaciones</h6>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:rgba(148,163,184,0.6);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
+                        <span><i class="fas fa-info-circle me-1"></i>Los porcentajes deben sumar exactamente <strong style="color:#e2e8f0;">100%</strong>. Acumulado: <strong id="totalPorc" style="color:#818cf8;">0%</strong></span>
+                        <span style="color:rgba(148,163,184,0.4);">Máximo <strong id="maxEvalLabel" style="color:rgba(148,163,184,0.6);">{{ max_evaluaciones }}</strong> evaluaciones</span>
+                    </div>
+                    <div id="notas-container"></div>
+                    <button type="button" onclick="agregarEvaluacion()"
+                            style="background:transparent;border:2px dashed rgba(99,102,241,0.3);border-radius:10px;color:#818cf8;padding:10px;width:100%;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;"
+                            onmouseover="this.style.background='rgba(99,102,241,0.08)'" onmouseout="this.style.background='transparent'">
+                        <i class="fas fa-plus me-2"></i>Añadir evaluación
+                    </button>
+                </div>
+
+                <hr style="border-color:rgba(255,255,255,0.07);">
+
+                <!-- PASO 3 -->
+                <div class="mb-4">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                        <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">3</div>
+                        <h6 style="margin:0;font-weight:700;color:#f1f5f9;">Examen final</h6>
+                        <span style="font-size:12px;color:rgba(148,163,184,0.4);">(opcional)</span>
+                    </div>
+                    <div id="examen-container"></div>
+                    <button type="button" id="btn-examen" onclick="toggleExamen()"
+                            style="background:transparent;border:2px dashed rgba(245,158,11,0.3);border-radius:10px;color:#fcd34d;padding:10px;width:100%;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;"
+                            onmouseover="this.style.background='rgba(245,158,11,0.06)'" onmouseout="this.style.background='transparent'">
+                        <i class="fas fa-file-alt me-2"></i>Añadir examen
+                    </button>
+                </div>
+
+                <!-- Botón interceptado por JS -->
+                <button type="button" id="btn-guardar-ramo"
+                        onclick="interceptarGuardarRamo()"
+                        style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:12px;padding:14px;width:100%;font-size:15px;font-weight:700;cursor:pointer;transition:opacity 0.2s;"
+                        onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                    <i class="fas fa-save me-2"></i>Guardar Ramo
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PREVIEW EN VIVO -->
+    <div class="col-12 col-lg-4">
+        <div style="position:sticky;top:20px;">
+            <div style="background:#1e1e2e;border-radius:16px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,0.3);">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+                    <div style="width:8px;height:8px;background:#4ade80;border-radius:50%;box-shadow:0 0 6px #4ade80;"></div>
+                    <span style="color:#e2e8f0;font-size:13px;font-weight:600;">Vista previa en vivo</span>
+                </div>
+                <div id="preview-nombre" style="color:#fff;font-size:18px;font-weight:700;margin-bottom:16px;">Nuevo Ramo</div>
+                <div style="background:#2a2a3e;border-radius:10px;padding:16px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span style="color:#94a3b8;font-size:12px;">Promedio parcial</span>
+                        <span id="preview-parcial" style="color:#4ba3ff;font-weight:700;font-size:18px;">—</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:#94a3b8;font-size:12px;">Promedio final</span>
+                        <span id="preview-final" style="color:#4ade80;font-weight:700;font-size:18px;">—</span>
+                    </div>
+                </div>
+                <div id="preview-meta" style="display:none;background:#2a2a3e;border-radius:10px;padding:12px;margin-bottom:12px;">
+                    <span style="color:#94a3b8;font-size:12px;">Meta</span>
+                    <div id="preview-meta-valor" style="color:#fbbf24;font-weight:700;font-size:16px;margin-top:2px;">—</div>
+                </div>
+                <div id="preview-evaluaciones" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══ MODAL LÍMITE DE RAMOS ═══ -->
+<div id="overlay-limite-cr">
+    <div class="modal-limite-card-cr">
+        <div style="text-align:center;margin-bottom:24px;">
+            <div style="width:56px;height:56px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 24px rgba(79,70,229,0.4);">
+                <i class="fas fa-layer-group" style="color:#fff;font-size:22px;"></i>
+            </div>
+            <h5 id="modal-cr-titulo" style="color:#e2e8f0;font-weight:800;margin-bottom:8px;font-size:17px;line-height:1.4;"></h5>
+            <p style="color:#64748b;font-size:13px;margin:0;line-height:1.6;">
+                Define cuántos ramos tiene este período para poder guardar tu ramo.<br>
+                <span style="color:rgba(148,163,184,0.4);font-size:11px;">Si cancelas, podrás cambiar el período seleccionado.</span>
+            </p>
+        </div>
+        <div id="modal-cr-botones" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:20px;"></div>
+        <button onclick="cerrarModalLimiteCr()"
+                style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(148,163,184,0.5);border-radius:12px;padding:10px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;letter-spacing:0.03em;"
+                onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='rgba(148,163,184,0.8)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.color='rgba(148,163,184,0.5)'">
+            Cancelar (cambiar período)
+        </button>
+    </div>
+</div>
+
+<script>
+const MAX_EVALUACIONES = {{ max_evaluaciones|default:10 }};
+const MAX_RAMOS_TIPO = {{ max_ramos_tipo|default:12 }};
+let evalCount = 0;
+let examenActivo = false;
+
+const limitesSemestres = {{ limites_semestres_json|safe }};
+
+function verificarLimiteSemestre(semestreId) {
+    const aviso = document.getElementById('aviso-sin-limite');
+    if (!semestreId) { aviso.style.display = 'none'; return; }
+    const limite = limitesSemestres[String(semestreId)];
+    aviso.style.display = (limite === null || limite === undefined) ? 'block' : 'none';
+}
+
+function interceptarGuardarRamo() {
+    const select = document.getElementById('selectSemestre');
+    const semestreId = select ? select.value : '';
+    if (!semestreId) { document.getElementById('formRamo').submit(); return; }
+    const limite = limitesSemestres[String(semestreId)];
+    if (limite === null || limite === undefined) {
+        abrirModalLimiteCr(semestreId);
+    } else {
+        document.getElementById('formRamo').submit();
+    }
+}
+
+function abrirModalLimiteCr(semestreId) {
+    const select = document.getElementById('selectSemestre');
+    const nombrePeriodo = select ? select.options[select.selectedIndex].text.trim() : 'este período';
+    document.getElementById('modal-cr-titulo').textContent = `¿Cuántos ramos tiene ${nombrePeriodo}?`;
+    const cont = document.getElementById('modal-cr-botones');
+    cont.innerHTML = '';
+    for (let i = 1; i <= MAX_RAMOS_TIPO; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.className = 'limite-btn-num-cr';
+        btn.title = `${i} ramo${i !== 1 ? 's' : ''}`;
+        btn.onclick = () => guardarLimiteCrYEnviar(semestreId, i, nombrePeriodo);
+        cont.appendChild(btn);
+    }
+    document.getElementById('overlay-limite-cr').classList.add('visible');
+}
+
+function cerrarModalLimiteCr() {
+    document.getElementById('overlay-limite-cr').classList.remove('visible');
+}
+
+async function guardarLimiteCrYEnviar(semestreId, limite, nombre) {
+    try {
+        const res = await fetch('/set-limite-periodo/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ semestre_id: semestreId, limite: limite })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            limitesSemestres[String(semestreId)] = limite;
+            cerrarModalLimiteCr();
+            if (window.showToast) window.showToast(`Límite de <strong>${limite} ramos</strong> guardado. Guardando ramo...`, 'success');
+            setTimeout(() => document.getElementById('formRamo').submit(), 700);
+        } else {
+            cerrarModalLimiteCr();
+            if (window.showToast) window.showToast(data.error || 'Error al guardar el límite.', 'danger');
+        }
+    } catch (e) {
+        cerrarModalLimiteCr();
+        if (window.showToast) window.showToast('Error de conexión.', 'danger');
+    }
+}
+
+document.getElementById('overlay-limite-cr').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalLimiteCr();
+});
+
+function getCookie(n) {
+    let v = null;
+    document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(n + '=')) v = decodeURIComponent(c.slice(n.length + 1));
+    });
+    return v;
+}
+
+function agregarEvaluacion(notaVal='', porcVal='') {
+    if (document.querySelectorAll('.eval-row').length >= MAX_EVALUACIONES) {
+        if(window.showToast) window.showToast(`Máximo ${MAX_EVALUACIONES} evaluaciones por ramo.`, 'warning');
+        else alert(`Máximo ${MAX_EVALUACIONES} evaluaciones.`);
+        return;
+    }
+    evalCount++;
+    const cont = document.getElementById('notas-container');
+    const div = document.createElement('div');
+    div.className = 'eval-row';
+    div.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center;';
+    div.innerHTML = `
+        <div style="flex:1;">
+            <input type="number" step="0.1" min="1" max="7"
+                   name="nota_${evalCount}" placeholder="Nota (1.0–7.0)"
+                   class="cr-input"
+                   value="${notaVal}" oninput="actualizarPreview()">
+        </div>
+        <div style="flex:1;">
+            <input type="number" step="1" min="1" max="100"
+                   name="porc_${evalCount}" placeholder="% Ponderación"
+                   class="cr-input porc-input"
+                   value="${porcVal}" oninput="actualizarPreview()">
+        </div>
+        <button type="button" onclick="this.parentElement.remove();actualizarPreview();"
+                style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0;transition:background 0.15s;"
+                onmouseover="this.style.background='rgba(239,68,68,0.22)'" onmouseout="this.style.background='rgba(239,68,68,0.12)'">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    cont.appendChild(div);
+    actualizarPreview();
+}
+
+function toggleExamen() {
+    const cont = document.getElementById('examen-container');
+    const btn = document.getElementById('btn-examen');
+    if (!examenActivo) {
+        cont.innerHTML = `
+            <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.22);border-radius:10px;padding:16px;margin-bottom:12px;">
+                <div style="display:flex;gap:8px;align-items:flex-end;">
+                    <div style="flex:1;">
+                        <label style="font-size:11px;font-weight:700;color:rgba(252,211,77,0.65);display:block;margin-bottom:4px;">NOTA EXAMEN <span style="font-weight:400;color:rgba(252,211,77,0.45);">(opcional)</span></label>
+                        <input type="number" step="0.1" min="1" max="7" name="examen_nota"
+                               placeholder="1.0–7.0" class="cr-input" oninput="actualizarPreview()">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:11px;font-weight:700;color:rgba(252,211,77,0.65);display:block;margin-bottom:4px;">PONDERACIÓN % *</label>
+                        <input type="number" step="1" min="1" max="60" name="examen_porcentaje"
+                               placeholder="Ej: 30" class="cr-input" oninput="actualizarPreview()">
+                    </div>
+                </div>
+            </div>`;
+        btn.innerHTML = '<i class="fas fa-times me-2"></i>Quitar examen';
+        btn.style.borderColor = 'rgba(239,68,68,0.3)';
+        btn.style.color = '#f87171';
+        examenActivo = true;
+    } else {
+        cont.innerHTML = '';
+        btn.innerHTML = '<i class="fas fa-file-alt me-2"></i>Añadir examen';
+        btn.style.borderColor = 'rgba(245,158,11,0.3)';
+        btn.style.color = '#fcd34d';
+        examenActivo = false;
+    }
+    actualizarPreview();
+}
+
+function redondearInacap(valor) { return Math.round(valor * 10) / 10; }
+
+function actualizarPreview() {
+    const nombre = document.getElementById('inputNombre')?.value || 'Nuevo Ramo';
+    document.getElementById('preview-nombre').textContent = nombre;
+    const filas = document.querySelectorAll('.eval-row');
+    let sumaNotas = 0, sumaPorc = 0, totalPorc = 0;
+    const badges = [];
+    filas.forEach(fila => {
+        const nota = parseFloat(fila.querySelector('input[name^="nota_"]')?.value) || 0;
+        const porc = parseFloat(fila.querySelector('input[name^="porc_"]')?.value) || 0;
+        totalPorc += porc;
+        if (nota > 0 && porc > 0) {
+            sumaNotas += nota * porc; sumaPorc += porc;
+            badges.push(`<span style="background:#1e40af;color:#fff;padding:3px 8px;border-radius:20px;font-size:11px;">${nota.toFixed(1)} (${porc}%)</span>`);
+        } else if (porc > 0) {
+            badges.push(`<span style="background:#92400e;color:#fff;padding:3px 8px;border-radius:20px;font-size:11px;">⏳ (${porc}%)</span>`);
+        }
+    });
+    document.getElementById('totalPorc').textContent = totalPorc + '%';
+    document.getElementById('totalPorc').style.color = Math.abs(totalPorc - 100) < 0.01 ? '#4ade80' : '#f87171';
+    let parcial = sumaPorc > 0 ? sumaNotas / sumaPorc : 0;
+    const exNota = parseFloat(document.querySelector('input[name="examen_nota"]')?.value) || 0;
+    const exPorc = parseFloat(document.querySelector('input[name="examen_porcentaje"]')?.value) || 0;
+    let final = parcial;
+    if (exNota > 0 && exPorc > 0) {
+        final = parcial * (1 - exPorc/100) + exNota * (exPorc/100);
+        badges.push(`<span style="background:#5b21b6;color:#fff;padding:3px 8px;border-radius:20px;font-size:11px;">Examen ${exNota.toFixed(1)} (${exPorc}%)</span>`);
+    }
+    parcial = redondearInacap(parcial); final = redondearInacap(final);
+    document.getElementById('preview-parcial').textContent = sumaPorc > 0 ? parcial.toFixed(1) : '—';
+    document.getElementById('preview-final').textContent = sumaPorc > 0 ? final.toFixed(1) : '—';
+    document.getElementById('preview-final').style.color = final >= 4.0 ? '#4ade80' : '#f87171';
+    const metaEl = document.getElementById('preview-meta');
+    const metaInput = parseFloat(document.getElementById('inputMeta')?.value);
+    if (metaInput) { metaEl.style.display = 'block'; document.getElementById('preview-meta-valor').textContent = `Meta: ${metaInput.toFixed(1)}`; }
+    else { metaEl.style.display = 'none'; }
+    document.getElementById('preview-evaluaciones').innerHTML = badges.join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    agregarEvaluacion();
+    const select = document.getElementById('selectSemestre');
+    if (select && select.value) verificarLimiteSemestre(select.value);
+});
+</script>
+{% endblock %}

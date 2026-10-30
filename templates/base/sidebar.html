@@ -1,0 +1,313 @@
+{% load static %}
+
+<style>
+/* ══════════════════════════════════════════
+   SIDEBAR — EDUPREDICT RICH DARK
+══════════════════════════════════════════ */
+#accordionSidebar.sidebar {
+    background: linear-gradient(180deg, #08081a 0%, #0d0d22 60%, #0f0f28 100%) !important;
+    border-right: 1px solid rgba(99,102,241,0.15) !important;
+    box-shadow: 4px 0 32px rgba(0,0,0,0.55) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+/* ── BRAND ── */
+#accordionSidebar .sidebar-brand {
+    padding: 1.2rem 1rem 1rem !important;
+    background: transparent !important;
+    border-bottom: 1px solid rgba(99,102,241,0.1) !important;
+    transition: background 0.2s !important;
+    text-decoration: none !important;
+}
+#accordionSidebar .sidebar-brand:hover {
+    background: rgba(99,102,241,0.07) !important;
+}
+#accordionSidebar .sidebar-brand-icon {
+    color: #818cf8 !important;
+    text-shadow: 0 0 16px rgba(129,140,248,0.9), 0 0 32px rgba(129,140,248,0.4) !important;
+    font-size: 1.5rem !important;
+}
+#accordionSidebar .sidebar-brand-text {
+    font-size: 1.1rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 4px !important;
+    background: linear-gradient(135deg, #a5b4fc, #c084fc) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+/* ── DIVIDER ── */
+#accordionSidebar .sidebar-divider {
+    border-top: 1px solid rgba(99,102,241,0.08) !important;
+    margin: 0.3rem 1rem !important;
+}
+
+/* ── SECTION HEADING ── */
+#accordionSidebar .sidebar-heading {
+    color: rgba(148,163,184,0.38) !important;
+    font-size: 0.58rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.2em !important;
+    text-transform: uppercase !important;
+    padding: 0.75rem 1.3rem 0.25rem !important;
+    transition: all 0.2s !important;
+}
+
+/* ── NAV ITEMS ── */
+#accordionSidebar .nav-item {
+    padding: 2px 12px !important;
+}
+#accordionSidebar .nav-link {
+    color: rgba(203,213,225,0.65) !important;
+    border-radius: 10px !important;
+    padding: 0.62rem 0.9rem !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    transition: all 0.18s ease !important;
+    border: 1px solid transparent !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    width: 100% !important;
+}
+#accordionSidebar .nav-link:hover {
+    color: #e2e8f0 !important;
+    background: rgba(99,102,241,0.13) !important;
+    border-color: rgba(99,102,241,0.2) !important;
+    transform: translateX(3px) !important;
+}
+#accordionSidebar .nav-link i,
+#accordionSidebar .nav-link .bi {
+    color: rgba(129,140,248,0.8) !important;
+    font-size: 14px !important;
+    width: 18px !important;
+    min-width: 18px !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
+}
+#accordionSidebar .nav-link .nav-badge {
+    margin-left: auto !important;
+    background: rgba(99,102,241,0.25) !important;
+    color: #a5b4fc !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    padding: 2px 6px !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(99,102,241,0.3) !important;
+    white-space: nowrap !important;
+}
+
+/* ── SCROLLBAR ── */
+#accordionSidebar::-webkit-scrollbar { width: 3px !important; }
+#accordionSidebar::-webkit-scrollbar-thumb {
+    background: rgba(99,102,241,0.2) !important;
+    border-radius: 2px !important;
+}
+
+/* ── SIDEBAR TOGGLE BUTTON ── */
+#accordionSidebar #sidebarToggle {
+    background: rgba(99,102,241,0.1) !important;
+    border: 1px solid rgba(99,102,241,0.18) !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    margin: 1rem auto !important;
+    transition: all 0.2s !important;
+}
+#accordionSidebar #sidebarToggle:hover {
+    background: rgba(99,102,241,0.25) !important;
+}
+
+/* ════════════════════════════════════════════════
+   MODO COLAPSADO
+════════════════════════════════════════════════ */
+#accordionSidebar.toggled .sidebar-brand-text,
+#accordionSidebar.toggled .nav-link span:not(.sr-only),
+#accordionSidebar.toggled .nav-link .nav-badge,
+#accordionSidebar.toggled .sidebar-heading,
+#accordionSidebar.toggled .perfil-card,
+#accordionSidebar.toggled .nivel-section,
+#accordionSidebar.toggled .sidebar-divider-label {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+#accordionSidebar.toggled .nav-link {
+    justify-content: center !important;
+    padding: 0.65rem !important;
+    margin: 0 !important;
+    gap: 0 !important;
+    transform: none !important;
+    overflow: visible !important;
+}
+#accordionSidebar.toggled .nav-link:hover {
+    transform: none !important;
+}
+#accordionSidebar.toggled .nav-link i,
+#accordionSidebar.toggled .nav-link .bi {
+    width: auto !important;
+    font-size: 1.1rem !important;
+}
+#accordionSidebar.toggled .nav-item {
+    padding: 2px 8px !important;
+}
+#accordionSidebar.toggled {
+    overflow: visible !important;
+}
+#accordionSidebar.toggled .sidebar-divider {
+    margin: 0.3rem 0.4rem !important;
+}
+</style>
+
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+    {% if user.is_authenticated %}
+
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{% url 'home' %}">
+        <div class="sidebar-brand-icon rotate-n-15">
+            <i class="bi bi-emoji-sunglasses-fill"></i>
+        </div>
+        <div class="sidebar-brand-text mx-3">E.P.</div>
+    </a>
+
+    <div class="perfil-card" style="padding:12px 12px 8px;border-bottom:1px solid rgba(99,102,241,0.08);">
+        <div style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.18);border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;box-shadow:0 0 12px rgba(99,102,241,0.4);">
+                {{ user.username|first|upper }}
+            </div>
+            <div style="overflow:hidden;min-width:0;">
+                <div style="color:#e2e8f0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ user.username }}</div>
+                <div style="display:flex;align-items:center;gap:5px;margin-top:2px;">
+                    <div style="width:6px;height:6px;background:#4ade80;border-radius:50%;box-shadow:0 0 5px #4ade80;flex-shrink:0;"></div>
+                    {% if NUM_PERIODO %}
+                        <span style="color:rgba(148,163,184,0.6);font-size:10px;white-space:nowrap;">
+                            {{ NUM_PERIODO }}° {{ TIPO_LABEL }}
+                        </span>
+                    {% else %}
+                        <span style="color:rgba(148,163,184,0.6);font-size:10px;white-space:nowrap;">
+                            Sin período activo
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="sidebar-divider my-0">
+
+    <div style="padding:8px 0;">
+        <div class="sidebar-heading">Principal</div>
+
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'home' %}" title="Inicio">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/mi_periodo/" title="Mi {{ TIPO_LABEL|default:'Semestre' }}">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Periodo Académico</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/estadisticas/" title="Estadísticas">
+                <i class="fas fa-chart-bar"></i>
+                <span>Estadísticas</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/filtrar_ramos/" title="Filtrar Ramos">
+                <i class="fas fa-filter"></i>
+                <span>Filtrar Ramos</span>
+            </a>
+        </li>
+    </div>
+
+    <hr class="sidebar-divider my-0">
+
+    <div style="padding:8px 0;">
+        <div class="sidebar-heading">Acciones</div>
+        <li class="nav-item">
+            <a class="nav-link" href="/crear_ramo/" title="Crear Ramo">
+                <i class="fas fa-plus-circle"></i>
+                <span>Crear Ramo</span>
+            </a>
+        </li>
+    </div>
+
+    <hr class="sidebar-divider my-0">
+
+    <!-- Sistema de Niveles -->
+    <div class="nivel-section" style="padding:10px 12px;">
+        <div style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.12);border-radius:12px;padding:12px;">
+            <div style="color:rgba(148,163,184,0.5);font-size:9px;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">Sistema de Niveles</div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:8px;height:8px;background:#4ba3ff;border-radius:50%;flex-shrink:0;box-shadow:0 0 5px #4ba3ff;"></div>
+                    <span style="color:rgba(203,213,225,0.6);font-size:11px;">Nivel 5 · Aprobado</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:8px;height:8px;background:#28a745;border-radius:50%;flex-shrink:0;box-shadow:0 0 5px #28a745;"></div>
+                    <span style="color:rgba(203,213,225,0.6);font-size:11px;">Nivel 4 · Bien encaminado</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:8px;height:8px;background:#ffc107;border-radius:50%;flex-shrink:0;box-shadow:0 0 5px #ffc107;"></div>
+                    <span style="color:rgba(203,213,225,0.6);font-size:11px;">Nivel 3 · Ajustado</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:8px;height:8px;background:#dc3545;border-radius:50%;flex-shrink:0;box-shadow:0 0 5px #dc3545;"></div>
+                    <span style="color:rgba(203,213,225,0.6);font-size:11px;">Nivel 2 · En riesgo</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:8px;height:8px;background:#555;border-radius:50%;flex-shrink:0;"></div>
+                    <span style="color:rgba(203,213,225,0.6);font-size:11px;">Nivel 1 · Reprobado</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if user.is_superuser %}
+    <hr class="sidebar-divider my-0">
+    <div style="padding:8px 0;">
+        <div class="sidebar-heading">Sistema</div>
+        <li class="nav-item">
+            <a class="nav-link" href="/admin" title="Panel Admin"
+               style="color:rgba(251,191,36,0.75) !important;">
+                <i class="fas fa-shield-alt" style="color:rgba(251,191,36,0.75) !important;"></i>
+                <span>Panel Admin</span>
+            </a>
+        </li>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <a class="sidebar-brand d-flex align-items-center justify-content-center">
+        <div class="sidebar-brand-icon rotate-n-15">
+            <i class="bi bi-emoji-sunglasses-fill"></i>
+        </div>
+        <div class="sidebar-brand-text mx-3">E.P.</div>
+    </a>
+    <hr class="sidebar-divider my-0">
+    <div style="padding:8px 0;">
+        <li class="nav-item">
+            <a class="nav-link" href="/" title="Inicio">
+                <i class="fas fa-home"></i>
+                <span>Inicio</span>
+            </a>
+        </li>
+    </div>
+    {% endif %}
+
+    <hr class="sidebar-divider d-none d-md-block">
+    <div class="text-center d-none d-md-inline">
+        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+    </div>
+
+</ul>

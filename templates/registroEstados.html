@@ -1,0 +1,24 @@
+{% extends 'base/base.html' %}
+
+{% block titulo %}
+  Registro Estados: {{ user.username }}
+{% endblock %}
+
+{% block contenido %}
+<div class="mb-5">
+  <div class="alert alert-warning col-6 offset-md-3" role="alert">
+    <h2 class="text-center">Aquí puedes registrar los Estados 😉</h2>
+  </div>
+</div>
+
+<form method="post" class="col-6 offset-3 border border-3 border-info-secundary rounded p-4 bg-light">
+
+  {% csrf_token %}
+  {{ form.as_p }}
+
+  <div class="d-grid">
+      <input type="submit" class="btn btn-warning" value="Enviar Datos">
+  </div>
+
+</form>
+{% endblock %}

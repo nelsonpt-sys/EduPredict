@@ -1,0 +1,316 @@
+{% extends "base/base.html" %}
+
+{% block titulo %}Configurar mis períodos — EduPredict{% endblock %}
+
+{% block contenido %}
+
+<style>
+/* ═══ TARJETAS TIPO PERÍODO ═══ */
+.tipo-card {
+    border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 18px 12px;
+    text-align: center;
+    transition: all 0.2s;
+    background: rgba(255,255,255,0.04);
+    user-select: none;
+    cursor: pointer;
+    height: 100%;
+}
+.tipo-card:hover {
+    border-color: rgba(99,102,241,0.45);
+    background: rgba(99,102,241,0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79,70,229,0.15);
+}
+.tipo-card.selected {
+    border-color: rgba(99,102,241,0.7);
+    background: rgba(99,102,241,0.14);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.15), 0 8px 24px rgba(79,70,229,0.18);
+}
+.tipo-card .card-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #e2e8f0;
+    margin-bottom: 3px;
+}
+.tipo-card .card-meta {
+    font-size: 10.5px;
+    color: rgba(148,163,184,0.55);
+    margin-top: 3px;
+    line-height: 1.4;
+}
+.tipo-card.selected .card-title { color: #a5b4fc; }
+.tipo-card.selected .card-meta  { color: rgba(165,180,252,0.6); }
+
+/* ═══ SELECTS OSCUROS MEJORADOS ═══ */
+.sp-select {
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 12px !important;
+    color: #e2e8f0 !important;
+    font-size: 14px !important;
+    padding: 12px 42px 12px 16px !important;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s !important;
+    width: 100%;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23818cf8' d='M5 7L0 2h10z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 16px center !important;
+    line-height: 1.5;
+}
+.sp-select:focus {
+    border-color: rgba(99,102,241,0.55) !important;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.14) !important;
+    background-color: rgba(255,255,255,0.09) !important;
+    outline: none !important;
+    color: #e2e8f0 !important;
+}
+.sp-select option {
+    background: #1a1a2e;
+    color: #e2e8f0;
+    padding: 8px;
+}
+.sp-select:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+.sp-select-wrap {
+    position: relative;
+    max-width: 340px;
+}
+
+/* ═══ BARRA INFO ═══ */
+#infoTipo {
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.22);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: rgba(165,180,252,0.85);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+/* ═══ SEPARADOR ═══ */
+.sp-hr { border-color: rgba(255,255,255,0.07); margin: 24px 0; }
+
+/* ═══ BADGE SELECCIONADO EN TARJETA ═══ */
+.tipo-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #818cf8;
+}
+.tipo-card { position: relative; }
+</style>
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-7 col-xl-6">
+
+            <div class="text-center mb-4">
+                <h2 class="text-white" style="font-weight:800;">🎓 Bienvenido a EduPredict</h2>
+                <p style="color:rgba(255,255,255,0.5);font-size:14px;">Antes de comenzar, cuéntanos cómo funciona tu carrera</p>
+            </div>
+
+            <div style="background:rgba(13,13,30,0.92);border:1px solid rgba(99,102,241,0.15);border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.5);">
+
+                <!-- Header -->
+                <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px 32px;">
+                    <h5 style="color:#fff;margin:0;font-weight:700;">
+                        <i class="fas fa-cog me-2"></i>Configuración inicial
+                    </h5>
+                    <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:13px;">Solo necesitas hacer esto una vez</p>
+                </div>
+
+                <form method="POST" id="setupForm" style="padding:28px 32px;">
+                    {% csrf_token %}
+
+                    <!-- PASO 1: Tipo de período -->
+                    <div class="mb-4">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                            <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">1</div>
+                            <h6 style="margin:0;font-weight:700;color:#f1f5f9;">¿Cómo se organiza tu carrera?</h6>
+                        </div>
+
+                        <div class="row g-3" id="tipoPeriodoCards">
+                            <div class="col-6 col-md-3">
+                                <label style="cursor:pointer;width:100%;display:block;">
+                                    <input type="radio" name="tipo_periodo" value="semestre" checked hidden>
+                                    <div class="tipo-card selected" data-tipo="semestre" data-max="10" data-max-ramos="12" data-max-eval="10">
+                                        <div style="font-size:24px;margin-bottom:8px;">📚</div>
+                                        <div class="card-title">Semestral</div>
+                                        <div class="card-meta">2 por año · Máx 10</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label style="cursor:pointer;width:100%;display:block;">
+                                    <input type="radio" name="tipo_periodo" value="trimestre" hidden>
+                                    <div class="tipo-card" data-tipo="trimestre" data-max="15" data-max-ramos="8" data-max-eval="8">
+                                        <div style="font-size:24px;margin-bottom:8px;">🗓️</div>
+                                        <div class="card-title">Trimestral</div>
+                                        <div class="card-meta">3 por año · Máx 15</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label style="cursor:pointer;width:100%;display:block;">
+                                    <input type="radio" name="tipo_periodo" value="bimestre" hidden>
+                                    <div class="tipo-card" data-tipo="bimestre" data-max="24" data-max-ramos="6" data-max-eval="6">
+                                        <div style="font-size:24px;margin-bottom:8px;">⚡</div>
+                                        <div class="card-title">Bimestral</div>
+                                        <div class="card-meta">6 por año · Máx 24</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label style="cursor:pointer;width:100%;display:block;">
+                                    <input type="radio" name="tipo_periodo" value="cuatrimestre" hidden>
+                                    <div class="tipo-card" data-tipo="cuatrimestre" data-max="12" data-max-ramos="10" data-max-eval="10">
+                                        <div style="font-size:24px;margin-bottom:8px;">📅</div>
+                                        <div class="card-title">Cuatrimestral</div>
+                                        <div class="card-meta">3 por año · Máx 12</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="infoTipo">
+                            <i class="fas fa-info-circle" style="flex-shrink:0;"></i>
+                            <span id="infoTipoTexto">Máximo 12 ramos por semestre · Máximo 10 evaluaciones por ramo</span>
+                        </div>
+                    </div>
+
+                    <hr class="sp-hr">
+
+                    <!-- PASO 2: Cantidad total -->
+                    <div class="mb-4">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                            <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">2</div>
+                            <h6 style="margin:0;font-weight:700;color:#f1f5f9;">
+                                ¿Cuántos <span id="labelPeriodo">semestres</span> tiene tu carrera en total?
+                            </h6>
+                        </div>
+                        <div class="sp-select-wrap">
+                            <select name="cantidad_periodos" id="selectCantidad"
+                                    class="sp-select" required>
+                                <option value="">Selecciona cantidad</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr class="sp-hr">
+
+                    <!-- PASO 3: Período actual -->
+                    <div class="mb-4">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                            <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">3</div>
+                            <h6 style="margin:0;font-weight:700;color:#f1f5f9;">
+                                ¿En qué <span id="labelPeriodo2">semestre</span> estás actualmente?
+                            </h6>
+                        </div>
+                        <div class="sp-select-wrap">
+                            <select name="periodo_actual" id="selectActual"
+                                    class="sp-select" required>
+                                <option value="">Primero selecciona la cantidad total</option>
+                            </select>
+                        </div>
+                        <div style="display:flex;align-items:flex-start;gap:6px;margin-top:10px;">
+                            <i class="fas fa-info-circle" style="font-size:11px;color:rgba(148,163,184,0.4);margin-top:2px;flex-shrink:0;"></i>
+                            <small style="color:rgba(148,163,184,0.4);font-size:11px;line-height:1.5;">
+                                El límite de ramos por período podrás configurarlo individualmente al visitar cada uno.
+                            </small>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:14px;padding:15px;width:100%;font-size:15px;font-weight:700;cursor:pointer;transition:opacity 0.2s, transform 0.2s;box-shadow:0 4px 20px rgba(79,70,229,0.35);"
+                            onmouseover="this.style.opacity='0.9';this.style.transform='translateY(-1px)'"
+                            onmouseout="this.style.opacity='1';this.style.transform='translateY(0)'">
+                        <i class="fas fa-rocket me-2"></i>¡Comenzar con EduPredict!
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+const LIMITES = {
+    semestre:     { max: 10, maxRamos: 12, maxEval: 10, label: 'semestre' },
+    trimestre:    { max: 15, maxRamos: 8,  maxEval: 8,  label: 'trimestre' },
+    bimestre:     { max: 24, maxRamos: 6,  maxEval: 6,  label: 'bimestre' },
+    cuatrimestre: { max: 12, maxRamos: 10, maxEval: 10, label: 'cuatrimestre' },
+};
+
+let tipoActual = 'semestre';
+
+function actualizarTipo(tipo) {
+    tipoActual = tipo;
+    const l = LIMITES[tipo];
+
+    document.querySelectorAll('.tipo-card').forEach(c => {
+        c.classList.remove('selected');
+        if (c.dataset.tipo === tipo) c.classList.add('selected');
+    });
+    document.querySelector(`input[name="tipo_periodo"][value="${tipo}"]`).checked = true;
+
+    document.querySelectorAll('[id^="labelPeriodo"]').forEach(el => el.textContent = l.label);
+
+    document.getElementById('infoTipoTexto').textContent =
+        `Máximo ${l.maxRamos} ramos por ${l.label} · Máximo ${l.maxEval} evaluaciones por ramo`;
+
+    generarSelectCantidad(l.max, l.label);
+    document.getElementById('selectActual').innerHTML =
+        '<option value="">Primero selecciona la cantidad total</option>';
+}
+
+function generarSelectCantidad(max, label) {
+    const sel = document.getElementById('selectCantidad');
+    sel.innerHTML = '<option value="">Selecciona cantidad</option>';
+    for (let i = 1; i <= max; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `${i} ${label}${i > 1 ? 's' : ''}`;
+        sel.appendChild(opt);
+    }
+}
+
+function generarSelectActual(max, label) {
+    const sel = document.getElementById('selectActual');
+    sel.innerHTML = '<option value="">Selecciona tu período actual</option>';
+    for (let i = 1; i <= max; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `${i}° ${label.charAt(0).toUpperCase() + label.slice(1)}`;
+        sel.appendChild(opt);
+    }
+}
+
+document.querySelectorAll('.tipo-card').forEach(card => {
+    card.addEventListener('click', () => actualizarTipo(card.dataset.tipo));
+});
+
+document.getElementById('selectCantidad').addEventListener('change', function() {
+    const cant = parseInt(this.value);
+    if (cant) {
+        generarSelectActual(cant, LIMITES[tipoActual].label);
+    } else {
+        document.getElementById('selectActual').innerHTML =
+            '<option value="">Primero selecciona la cantidad total</option>';
+    }
+});
+
+actualizarTipo('semestre');
+</script>
+{% endblock %}

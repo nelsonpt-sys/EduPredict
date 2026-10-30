@@ -1,0 +1,130 @@
+{% extends 'base/base_login.html' %}
+
+{% block titulo %}Crear Cuenta — EduPredict{% endblock %}
+
+{% block contenido %}
+<div class="mb-4">
+    <h3 style="font-weight:800;color:#f1f5f9;margin-bottom:4px;">Crea tu cuenta 🎓</h3>
+    <p style="color:rgba(148,163,184,0.65);font-size:14px;margin:0;">Únete a EduPredict y toma el control de tu rendimiento académico</p>
+</div>
+
+<!-- Google Login Section -->
+<div id="g_id_onload"
+     data-client_id="{{ GOOGLE_CLIENT_ID }}"
+     data-context="signup"
+     data-ux_mode="popup"
+     data-callback="handleCredentialResponse"
+     data-auto_prompt="false">
+</div>
+
+<div class="g_id_signin mb-4"
+     data-type="standard"
+     data-shape="rectangular"
+     data-theme="outline"
+     data-text="signup_with"
+     data-size="large"
+     data-logo_alignment="left"
+     data-width="100%">
+</div>
+
+<div style="display:flex;align-items:center;margin-bottom:20px;">
+    <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+    <div style="margin:0 15px;color:rgba(148,163,184,0.4);font-size:11px;font-weight:700;text-transform:uppercase;">O crea un usuario manual</div>
+    <div style="flex:1;height:1px;background:rgba(255,255,255,0.08);"></div>
+</div>
+
+<script>
+function handleCredentialResponse(response) {
+    const token = response.credential;
+    fetch("{% url 'api_movil_google_auth' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ token: token })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            // Si es nuevo, podríamos mandar a una página de bienvenida o ajuste de perfil
+            window.location.href = "{% url 'home' %}";
+        } else {
+            alert("Error: " + (data.error || "No se pudo crear la cuenta con Google."));
+        }
+    })
+    .catch(e => {
+        console.error(e);
+        alert("Ocurrió un error al conectar con el servidor.");
+    });
+}
+</script>
+
+<form method="post" class="user">
+    {% csrf_token %}
+
+    <div class="form-group mb-3">
+        <label style="font-size:12px;font-weight:700;color:rgba(148,163,184,0.6);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;display:block;">Nombre de usuario</label>
+        <input type="text"
+               class="form-control form-control-user"
+               id="id_username"
+               name="{{ form.username.html_name }}"
+               autocomplete="username"
+               autofocus autocapitalize="none"
+               required
+               placeholder="Elige un nombre de usuario"
+               value="{{ form.username.value|default_if_none:'' }}">
+    </div>
+
+    <div class="form-group mb-3">
+        <label style="font-size:12px;font-weight:700;color:rgba(148,163,184,0.6);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;display:block;">Contraseña</label>
+        <input type="password"
+               class="form-control form-control-user"
+               id="id_password1"
+               name="{{ form.password1.html_name }}"
+               autocomplete="new-password"
+               required
+               placeholder="Crea una contraseña segura">
+    </div>
+
+    <div class="form-group mb-4">
+        <label style="font-size:12px;font-weight:700;color:rgba(148,163,184,0.6);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;display:block;">Confirmar contraseña</label>
+        <input type="password"
+               class="form-control form-control-user"
+               id="id_password2"
+               name="{{ form.password2.html_name }}"
+               autocomplete="new-password"
+               required
+               placeholder="Repite tu contraseña">
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-user btn-block">
+        <i class="fas fa-user-plus me-2"></i> Crear Cuenta
+    </button>
+
+    {% if form.errors %}
+    <div style="display:flex;align-items:flex-start;gap:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.28);border-radius:14px;padding:14px 16px;margin-top:16px;">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#dc3545,#ef4444);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fas fa-times" style="color:#fff;font-size:14px;"></i>
+        </div>
+        <div style="flex:1;">
+            <div style="font-size:11px;font-weight:800;color:#f87171;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">✕ Error al registrarse</div>
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                <div style="font-size:13px;color:rgba(252,165,165,0.8);line-height:1.5;margin-bottom:2px;">
+                    <i class="fas fa-circle" style="font-size:5px;vertical-align:middle;margin-right:5px;"></i>{{ error }}
+                </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <hr class="auth-divider my-4">
+
+    <div class="text-center">
+        <span style="color:rgba(148,163,184,0.5);font-size:13px;">¿Ya tienes una cuenta?</span>
+        <a href="{% url 'login' %}" style="font-size:13px;margin-left:6px;">Inicia sesión aquí</a>
+    </div>
+</form>
+{% endblock %}

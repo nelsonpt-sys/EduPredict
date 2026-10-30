@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: edupredictwebapp-backend
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn EVA4_FINAL.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

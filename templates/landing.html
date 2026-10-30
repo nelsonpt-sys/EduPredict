@@ -1,0 +1,753 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="EduPredict — Tu asistente académico inteligente. Gestiona tus notas, predice tus resultados y nunca más te sorprenda un promedio." />
+    <title>EduPredict — Tu Asistente Académico Inteligente</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/favicon.ico' %}" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous" defer></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+        font-family: 'Inter', sans-serif;
+        background: #07071a;
+        color: #e2e8f0;
+        overflow-x: hidden;
+    }
+    :root {
+        --indigo: #4f46e5; --violet: #7c3aed;
+        --cyan: #06b6d4;   --emerald: #10b981;
+        --amber: #f59e0b;  --red: #ef4444;
+    }
+
+    .dot-bg::before {
+        content: '';
+        position: fixed; top:0; left:0; right:0; bottom:0;
+        background-image: radial-gradient(circle, rgba(99,102,241,0.12) 1px, transparent 1px);
+        background-size: 28px 28px;
+        pointer-events: none; z-index: 0;
+    }
+
+    /* NAV */
+    .ep-nav {
+        position: fixed; top:0; left:0; right:0; z-index: 1000;
+        padding: 18px 0;
+        transition: all 0.3s;
+    }
+    .ep-nav.scrolled {
+        background: rgba(7,7,26,0.96);
+        padding: 11px 0;
+        border-bottom: 1px solid rgba(99,102,241,0.12);
+        box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+    .ep-nav .nav-inner {
+        max-width: 1200px; margin: 0 auto;
+        padding: 0 24px;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-brand {
+        font-size: 22px; font-weight: 900; letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #a5b4fc, #c084fc);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; text-decoration: none;
+    }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-links a {
+        color: rgba(203,213,225,0.65);
+        text-decoration: none; font-size: 14px; font-weight: 500;
+        padding: 8px 14px; border-radius: 8px; transition: all 0.2s;
+    }
+    .nav-links a:hover { color: #e2e8f0; background: rgba(99,102,241,0.12); }
+    .nav-cta {
+        background: linear-gradient(135deg, var(--indigo), var(--violet)) !important;
+        color: #fff !important; font-weight: 700 !important;
+        box-shadow: 0 4px 16px rgba(79,70,229,0.4);
+    }
+    .nav-cta:hover { transform: translateY(-1px); color: #fff !important; }
+
+    /* HERO */
+    .hero {
+        min-height: 100vh;
+        display: flex; align-items: center; justify-content: center;
+        text-align: center; padding: 110px 20px 70px;
+        position: relative; overflow: hidden;
+    }
+    .hero-orb {
+        position: absolute; border-radius: 50%;
+        pointer-events: none; filter: blur(90px);
+    }
+    .orb1 {
+        width: 600px; height: 600px;
+        background: radial-gradient(circle, rgba(79,70,229,0.22) 0%, transparent 70%);
+        top: -150px; left: -150px;
+        animation: orbFloat 9s ease-in-out infinite;
+    }
+    .orb2 {
+        width: 450px; height: 450px;
+        background: radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%);
+        bottom: -80px; right: -80px;
+        animation: orbFloat 9s ease-in-out infinite reverse;
+        animation-delay: -4s;
+    }
+    .orb3 {
+        width: 320px; height: 320px;
+        background: radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%);
+        top: 40%; left: 60%;
+        animation: orbFloat 7s ease-in-out infinite;
+        animation-delay: -2s;
+    }
+    @keyframes orbFloat {
+        0%,100% { transform: translateY(0); }
+        50%      { transform: translateY(-35px); }
+    }
+
+    .particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .particle {
+        position: absolute; border-radius: 50%;
+        background: rgba(165,180,252,0.55);
+        animation: pDrift linear infinite;
+    }
+    @keyframes pDrift {
+        0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+        8%   { opacity: 1; }
+        92%  { opacity: 1; }
+        100% { transform: translateY(-80px) rotate(720deg); opacity: 0; }
+    }
+
+    .hero-content { position: relative; z-index: 2; max-width: 880px; margin: 0 auto; }
+
+    .hero-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(79,70,229,0.1);
+        border: 1px solid rgba(79,70,229,0.28);
+        border-radius: 50px; padding: 6px 18px;
+        font-size: 12px; font-weight: 700; color: #a5b4fc;
+        letter-spacing: 0.08em; text-transform: uppercase;
+        margin-bottom: 30px;
+        animation: fadeDown 0.8s ease both;
+    }
+    .badge-dot {
+        width: 6px; height: 6px; background: #4ade80;
+        border-radius: 50%; box-shadow: 0 0 8px #4ade80;
+        animation: glowPulse 2s infinite;
+    }
+    @keyframes glowPulse {
+        0%,100% { box-shadow: 0 0 4px #4ade80; }
+        50%      { box-shadow: 0 0 14px #4ade80, 0 0 24px rgba(74,222,128,0.35); }
+    }
+
+    .hero-title {
+        font-size: clamp(44px, 8.5vw, 82px);
+        font-weight: 900; line-height: 1.04;
+        letter-spacing: -2.5px; margin-bottom: 26px;
+        animation: fadeUp 0.8s 0.18s ease both;
+    }
+    .title-white { display: block; color: #f8fafc; }
+    .title-grad {
+        display: block;
+        background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 45%, #67e8f9 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+        background-size: 200% 200%;
+        animation: gradMove 4s ease infinite;
+    }
+    @keyframes gradMove {
+        0%,100% { background-position: 0% 50%; }
+        50%      { background-position: 100% 50%; }
+    }
+
+    .hero-desc {
+        font-size: clamp(15px, 2.5vw, 18px);
+        color: rgba(148,163,184,0.82);
+        line-height: 1.8; max-width: 580px;
+        margin: 0 auto 44px;
+        animation: fadeUp 0.8s 0.35s ease both;
+    }
+
+    .hero-btns {
+        display: flex; gap: 14px; justify-content: center;
+        flex-wrap: wrap; margin-bottom: 68px;
+        animation: fadeUp 0.8s 0.52s ease both;
+    }
+    .btn-primary-glow {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: linear-gradient(135deg, var(--indigo), var(--violet));
+        color: #fff; padding: 16px 36px; border-radius: 50px;
+        font-weight: 700; font-size: 15px; text-decoration: none;
+        box-shadow: 0 8px 28px rgba(79,70,229,0.45);
+        transition: transform 0.2s, box-shadow 0.2s; border: none; cursor: pointer;
+    }
+    .btn-primary-glow:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(79,70,229,0.62); color: #fff; }
+    .btn-ghost {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: rgba(255,255,255,0.06); color: rgba(226,232,240,0.88);
+        padding: 16px 32px; border-radius: 50px;
+        font-weight: 600; font-size: 15px; text-decoration: none;
+        border: 1px solid rgba(255,255,255,0.13);
+        transition: all 0.2s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.11); color: #fff; transform: translateY(-3px); border-color: rgba(99,102,241,0.38); }
+
+    .hero-stats {
+        display: flex; gap: 48px; justify-content: center;
+        flex-wrap: wrap; padding-top: 44px;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        animation: fadeUp 0.8s 0.68s ease both;
+    }
+    .hstat { text-align: center; }
+    .hstat-num {
+        font-size: 34px; font-weight: 900; line-height: 1;
+        background: linear-gradient(135deg, #a5b4fc, #67e8f9);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .hstat-label { font-size: 11px; color: rgba(148,163,184,0.5); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
+
+    /* SECTIONS */
+    .section { padding: 96px 0; position: relative; }
+    .section-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    .stag {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(79,70,229,0.1); border: 1px solid rgba(79,70,229,0.22);
+        border-radius: 50px; padding: 5px 16px;
+        font-size: 11px; font-weight: 800; color: #a5b4fc;
+        letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px;
+    }
+    .stitle {
+        font-size: clamp(28px, 5vw, 46px);
+        font-weight: 900; letter-spacing: -1.2px;
+        color: #f8fafc; margin-bottom: 14px; line-height: 1.12;
+    }
+    .stitle span { background: linear-gradient(135deg, #a5b4fc, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .sdesc { font-size: 16px; color: rgba(148,163,184,0.7); max-width: 540px; line-height: 1.75; }
+
+    /* FEATURE CARDS */
+    .fcard {
+        background: rgba(255,255,255,0.028);
+        border: 1px solid rgba(99,102,241,0.1);
+        border-radius: 20px; padding: 30px 26px;
+        transition: all 0.28s cubic-bezier(0.34,1.2,0.64,1);
+        position: relative; overflow: hidden; height: 100%;
+    }
+    .fcard::after {
+        content: ''; position: absolute; top:0; left:0; right:0; height: 2px;
+        background: var(--fc-grad, linear-gradient(90deg, #4f46e5, #7c3aed));
+        opacity: 0; transition: opacity 0.3s;
+    }
+    .fcard:hover { transform: translateY(-7px); border-color: rgba(99,102,241,0.28); background: rgba(255,255,255,0.05); box-shadow: 0 24px 60px rgba(0,0,0,0.3); }
+    .fcard:hover::after { opacity: 1; }
+    .ficon { width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 18px; }
+    .fbadge {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: rgba(79,70,229,0.13); color: #a5b4fc;
+        font-size: 10px; font-weight: 800; padding: 3px 10px;
+        border-radius: 20px; text-transform: uppercase;
+        letter-spacing: 0.06em; margin-bottom: 10px;
+    }
+    .fcard h3 { font-size: 15px; font-weight: 800; color: #f1f5f9; margin-bottom: 9px; }
+    .fcard p  { font-size: 13.5px; color: rgba(148,163,184,0.72); line-height: 1.75; margin: 0; }
+
+    /* HOW IT WORKS */
+    .step {
+        display: flex; gap: 18px; align-items: flex-start;
+        padding: 24px 22px;
+        background: rgba(255,255,255,0.022);
+        border: 1px solid rgba(255,255,255,0.055);
+        border-radius: 16px; margin-bottom: 14px;
+        transition: all 0.22s;
+    }
+    .step:hover { background: rgba(99,102,241,0.07); border-color: rgba(99,102,241,0.22); transform: translateX(5px); }
+    .step-n {
+        width: 42px; height: 42px; flex-shrink: 0;
+        background: linear-gradient(135deg, var(--indigo), var(--violet));
+        border-radius: 12px; display: flex; align-items: center; justify-content: center;
+        font-size: 15px; font-weight: 900; color: #fff;
+        box-shadow: 0 4px 14px rgba(79,70,229,0.38);
+    }
+    .step h4 { font-size: 14px; font-weight: 800; color: #f1f5f9; margin-bottom: 5px; }
+    .step p  { font-size: 13px; color: rgba(148,163,184,0.68); margin: 0; line-height: 1.6; }
+
+    /* SISTEMA DE NIVELES */
+    .nivel-box {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 20px; padding: 32px;
+    }
+    .ditem {
+        display: flex; align-items: center; gap: 14px;
+        padding: 14px 18px; border-radius: 12px;
+        margin-bottom: 8px; transition: all 0.2s; cursor: default;
+    }
+    .ditem:hover { transform: translateX(6px); }
+    .ddot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .dlvl { font-size: 11px; font-weight: 900; width: 28px; }
+    .dname { font-size: 14px; font-weight: 700; flex: 1; }
+    .ddesc { font-size: 12px; color: rgba(148,163,184,0.55); }
+
+    /* FEEDBACK */
+    .feedback-section {
+        background: linear-gradient(135deg, rgba(79,70,229,0.07) 0%, rgba(6,182,212,0.04) 100%);
+        border-top: 1px solid rgba(99,102,241,0.12);
+        border-bottom: 1px solid rgba(99,102,241,0.12);
+    }
+    .ftype-btn {
+        display: flex; align-items: center; gap: 10px;
+        padding: 13px 18px; border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.035);
+        color: rgba(203,213,225,0.65);
+        font-size: 13px; font-weight: 600;
+        cursor: pointer; transition: all 0.2s;
+        width: 100%; text-align: left;
+    }
+    .ftype-btn.active, .ftype-btn:hover {
+        background: rgba(79,70,229,0.14);
+        border-color: rgba(79,70,229,0.38);
+        color: #a5b4fc;
+    }
+    .ep-input {
+        width: 100%;
+        background: rgba(255,255,255,0.05) !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 12px !important;
+        color: #e2e8f0 !important;
+        padding: 12px 15px !important;
+        font-size: 14px !important;
+        font-family: 'Inter', sans-serif !important;
+        transition: border-color 0.2s, box-shadow 0.2s !important;
+    }
+    .ep-input:focus {
+        border-color: rgba(99,102,241,0.5) !important;
+        background: rgba(255,255,255,0.08) !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(79,70,229,0.14) !important;
+        color: #e2e8f0 !important;
+    }
+    .ep-input::placeholder { color: rgba(100,116,139,0.65) !important; }
+    .ep-label {
+        font-size: 11px; font-weight: 700;
+        color: rgba(148,163,184,0.55);
+        text-transform: uppercase; letter-spacing: 0.08em;
+        margin-bottom: 6px; display: block;
+    }
+
+    /* FOOTER */
+    .ep-footer {
+        background: rgba(0,0,0,0.38);
+        border-top: 1px solid rgba(255,255,255,0.05);
+        padding: 40px 0 22px;
+    }
+    .footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .fbrand { font-size: 20px; font-weight: 900; background: linear-gradient(135deg, #a5b4fc, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* ANIMATIONS */
+    @keyframes fadeDown { from { opacity:0; transform: translateY(-18px); } to { opacity:1; transform: translateY(0); } }
+    @keyframes fadeUp   { from { opacity:0; transform: translateY(22px);  } to { opacity:1; transform: translateY(0); } }
+    .reveal { opacity:0; transform: translateY(28px); transition: opacity 0.58s ease, transform 0.58s ease; }
+    .reveal.visible { opacity:1; transform: translateY(0); }
+    .rd1 { transition-delay: 0.08s; } .rd2 { transition-delay: 0.18s; }
+    .rd3 { transition-delay: 0.28s; } .rd4 { transition-delay: 0.38s; }
+
+    @media (max-width: 767px) {
+        .hero-stats { gap: 20px; }
+        .nivel-box { padding: 20px 14px; }
+    }
+    </style>
+</head>
+<body class="dot-bg">
+
+<!-- TOAST -->
+{% if messages %}
+{% for message in messages %}
+<div id="landing-toast" style="
+    position:fixed;top:88px;left:50%;
+    transform:translateX(-50%) translateY(-16px);
+    background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.1));
+    border:1px solid rgba(16,185,129,0.38);
+    border-radius:14px;padding:13px 26px;
+    color:#6ee7b7;font-size:14px;font-weight:700;
+    box-shadow:0 8px 32px rgba(0,0,0,0.5);
+    z-index:9999;opacity:0;
+    transition:opacity 0.35s ease,transform 0.35s ease;
+    white-space:nowrap;pointer-events:none;
+">
+    <i class="fas fa-check-circle me-2"></i>{{ message }}
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- NAV -->
+<nav class="ep-nav" id="epNav">
+    <div class="nav-inner">
+        <a class="nav-brand" href="#top">EduPredict 🎓</a>
+        <div class="nav-links">
+            <a href="#features" class="d-none d-md-block">Funciones</a>
+            <a href="#how-it-works" class="d-none d-md-block">Cómo funciona</a>
+            <a href="#feedback" class="d-none d-md-block">Feedback</a>
+            <a href="{% url 'calculoRapido' %}" class="d-none d-lg-block">Cálculo rápido</a>
+            <a href="{% url 'login' %}" class="nav-cta">Entrar →</a>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+    <div class="hero-orb orb1"></div>
+    <div class="hero-orb orb2"></div>
+    <div class="hero-orb orb3"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="hero-content">
+        <div class="hero-badge">
+            <span class="badge-dot"></span>
+            Asistente académico con IA integrada
+        </div>
+
+        <h1 class="hero-title">
+            <span class="title-white">Predice tu éxito</span>
+            <span class="title-grad">académico</span>
+        </h1>
+
+        <p class="hero-desc">
+            EduPredict te ayuda a gestionar tus notas, anticipar tus resultados
+            y saber exactamente qué necesitas para alcanzar tus metas.
+            Con IA integrada que conoce tu situación en tiempo real.
+        </p>
+
+        <div class="hero-btns">
+            <a href="{% url 'signup' %}" class="btn-primary-glow">
+                <i class="fas fa-rocket"></i> Comenzar gratis
+            </a>
+            <a href="{% url 'login' %}" class="btn-ghost">
+                <i class="fas fa-sign-in-alt"></i> Ya tengo cuenta
+            </a>
+            <a href="{% url 'calculoRapido' %}" class="btn-ghost d-none d-sm-inline-flex">
+                <i class="fas fa-calculator"></i> Cálculo rápido
+            </a>
+        </div>
+
+        <div class="hero-stats">
+            <div class="hstat">
+                <div class="hstat-num" data-count="5">0</div>
+                <div class="hstat-label">Tipos de período</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-num" data-count="5">0</div>
+                <div class="hstat-label">Niveles de alerta</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-num">100%</div>
+                <div class="hstat-label">Gratuito</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-num">IA</div>
+                <div class="hstat-label">Asistente integrado</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features" style="background: rgba(0,0,0,0.2);">
+    <div class="section-inner">
+        <div class="text-center mb-5 reveal">
+            <div class="stag"><i class="fas fa-star"></i> Funcionalidades</div>
+            <h2 class="stitle">Todo lo que necesitas,<br><span>en un solo lugar</span></h2>
+            <p class="sdesc mx-auto">Desde el seguimiento de notas hasta predicciones con IA, EduPredict te tiene cubierto para que nunca más te sorprenda un promedio.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-12 col-md-6 col-lg-4 reveal rd1">
+                <div class="fcard" style="--fc-grad: linear-gradient(90deg,#4f46e5,#7c3aed);">
+                    <div class="fbadge"><i class="fas fa-sparkles"></i> IA Integrada</div>
+                    <div class="ficon" style="background:rgba(79,70,229,0.14);"><i class="fas fa-robot" style="color:#818cf8;"></i></div>
+                    <h3>Asistente IA EduPredict</h3>
+                    <p>Un asistente inteligente que conoce tus notas en tiempo real. Pregúntale qué nota necesitas para pasar, qué ramos están en riesgo o simplemente cómo vas este semestre.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 reveal rd2">
+                <div class="fcard" style="--fc-grad: linear-gradient(90deg,#10b981,#06b6d4);">
+                    <div class="ficon" style="background:rgba(16,185,129,0.14);"><i class="fas fa-calculator" style="color:#34d399;"></i></div>
+                    <h3>Cálculo Inteligente</h3>
+                    <p>Calcula automáticamente tu promedio ponderado con porcentajes y examen. Define una meta y el sistema te muestra exactamente qué necesitas para alcanzarla.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 reveal rd3">
+                <div class="fcard" style="--fc-grad: linear-gradient(90deg,#ef4444,#f97316);">
+                    <div class="ficon" style="background:rgba(239,68,68,0.14);"><i class="fas fa-shield-halved" style="color:#f87171;"></i></div>
+                    <h3>Sistema de Niveles</h3>
+                    <p>Un sistema de alerta visual por colores que indica el estado real de cada ramo. Identifica de un vistazo dónde debes enfocarte antes de que sea demasiado tarde.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 reveal rd1">
+                <div class="fcard" style="--fc-grad: linear-gradient(90deg,#06b6d4,#0ea5e9);">
+                    <div class="ficon" style="background:rgba(6,182,212,0.14);"><i class="fas fa-cloud" style="color:#67e8f9;"></i></div>
+                    <h3>Datos en la Nube</h3>
+                    <p>Tu información académica se guarda de forma segura. Accede desde cualquier dispositivo, en cualquier momento, sin perder absolutamente nada.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 reveal rd2">
+                <div class="fcard" style="--fc-grad: linear-gradient(90deg,#f59e0b,#fbbf24);">
+                    <div class="ficon" style="background:rgba(245,158,11,0.14);"><i class="fas fa-chart-line" style="color:#fcd34d;"></i></div>
+                    <h3>Gráficos Comparativos</h3>
+                    <p>Compara visualmente tus promedios entre períodos con gráficos interactivos. Analiza tu evolución e identifica tendencias reales en tu rendimiento.</p>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4 reveal rd3">
+                <div class="fcard" style="--fc-grad: linear-gradient(90deg,#8b5cf6,#c084fc);">
+                    <div class="ficon" style="background:rgba(139,92,246,0.14);"><i class="fas fa-calendar-alt" style="color:#c4b5fd;"></i></div>
+                    <h3>Múltiples Sistemas</h3>
+                    <p>Compatible con semestres, trimestres, bimestres y cuatrimestres. Se adapta completamente a cómo funciona tu carrera específica.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS + SISTEMA DE NIVELES -->
+<section class="section" id="how-it-works">
+    <div class="section-inner">
+        <div class="row g-5 align-items-start">
+            <div class="col-12 col-lg-6">
+                <div class="reveal">
+                    <div class="stag"><i class="fas fa-map-signs"></i> Paso a paso</div>
+                    <h2 class="stitle mb-2">¿Cómo <span>funciona</span>?</h2>
+                    <p class="sdesc mb-4">En minutos tienes tu situación académica completamente organizada.</p>
+                </div>
+                <div class="step reveal rd1">
+                    <div class="step-n">1</div>
+                    <div><h4>Crea tu cuenta y configura tu carrera</h4><p>Elige tu sistema de períodos y cuántos tiene tu carrera. Solo se hace una vez.</p></div>
+                </div>
+                <div class="step reveal rd2">
+                    <div class="step-n">2</div>
+                    <div><h4>Agrega tus ramos y evaluaciones</h4><p>Registra cada asignatura con sus evaluaciones, porcentajes y opcionalmente una meta de promedio.</p></div>
+                </div>
+                <div class="step reveal rd3">
+                    <div class="step-n">3</div>
+                    <div><h4>Ingresa tus notas a medida que las recibes</h4><p>EduPredict actualiza automáticamente tu promedio y nivel de alerta en tiempo real.</p></div>
+                </div>
+                <div class="step reveal rd4">
+                    <div class="step-n">4</div>
+                    <div><h4>Consulta a la IA qué notas necesitas</h4><p>El asistente te dice exactamente qué nota necesitas en cada evaluación pendiente para alcanzar tu meta.</p></div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6 reveal rd2">
+                <div class="stag"><i class="fas fa-shield-halved"></i> Sistema de Niveles</div>
+                <h2 class="stitle mb-2">Siempre sabes <span>cómo vas</span></h2>
+                <p class="sdesc mb-4">5 niveles de alerta te dicen exactamente en qué estado está cada ramo.</p>
+                <div class="nivel-box">
+                    <div class="ditem" style="background:rgba(6,182,212,0.07);">
+                        <div class="ddot" style="background:#06b6d4;box-shadow:0 0 8px #06b6d4;"></div>
+                        <div class="dlvl" style="color:#67e8f9;">N5</div>
+                        <div class="dname" style="color:#67e8f9;">Aprobado ✅</div>
+                        <div class="ddesc">Ya aprobaste definitivamente</div>
+                    </div>
+                    <div class="ditem" style="background:rgba(16,185,129,0.07);">
+                        <div class="ddot" style="background:#10b981;box-shadow:0 0 8px #10b981;"></div>
+                        <div class="dlvl" style="color:#6ee7b7;">N4</div>
+                        <div class="dname" style="color:#6ee7b7;">Bien encaminado 📈</div>
+                        <div class="ddesc">Aunque te vaya mal, igual pasas</div>
+                    </div>
+                    <div class="ditem" style="background:rgba(245,158,11,0.07);">
+                        <div class="ddot" style="background:#f59e0b;box-shadow:0 0 8px #f59e0b;"></div>
+                        <div class="dlvl" style="color:#fcd34d;">N3</div>
+                        <div class="dname" style="color:#fcd34d;">Ajustado ⚠️</div>
+                        <div class="ddesc">Necesitas sacar notas decentes</div>
+                    </div>
+                    <div class="ditem" style="background:rgba(239,68,68,0.07);">
+                        <div class="ddot" style="background:#ef4444;box-shadow:0 0 8px #ef4444;"></div>
+                        <div class="dlvl" style="color:#fca5a5;">N2</div>
+                        <div class="dname" style="color:#fca5a5;">En riesgo 🚨</div>
+                        <div class="ddesc">Necesitas notas muy altas para salvar</div>
+                    </div>
+                    <div class="ditem" style="background:rgba(75,85,99,0.12);">
+                        <div class="ddot" style="background:#6b7280;"></div>
+                        <div class="dlvl" style="color:#9ca3af;">N1</div>
+                        <div class="dname" style="color:#9ca3af;">Reprobado definitivo ❌</div>
+                        <div class="ddesc">Ya no hay forma matemática de pasar</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEEDBACK -->
+<section class="section feedback-section" id="feedback">
+    <div class="section-inner">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8">
+                <div class="text-center mb-5 reveal">
+                    <div class="stag"><i class="fas fa-comments"></i> Comunidad</div>
+                    <h2 class="stitle">Ayúdanos a <span>mejorar</span></h2>
+                    <p class="sdesc mx-auto">
+                        EduPredict está en constante desarrollo. ¿Encontraste un bug? ¿Tienes una idea para una función nueva?
+                        ¿Algo no funciona como esperabas? <strong style="color:#a5b4fc;">Tu opinión es lo que nos hace crecer.</strong>
+                    </p>
+                </div>
+
+                <div class="row g-3 mb-4 reveal rd1">
+                    <div class="col-12 col-sm-4">
+                        <button class="ftype-btn active" onclick="setTipo(this, 'bug')">
+                            <i class="fas fa-bug" style="color:#f87171;font-size:15px;"></i> Reportar un bug
+                        </button>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <button class="ftype-btn" onclick="setTipo(this, 'mejora')">
+                            <i class="fas fa-lightbulb" style="color:#fcd34d;font-size:15px;"></i> Sugerir mejora
+                        </button>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <button class="ftype-btn" onclick="setTipo(this, 'comentario')">
+                            <i class="fas fa-comment" style="color:#67e8f9;font-size:15px;"></i> Comentario
+                        </button>
+                    </div>
+                </div>
+
+                <form method="POST" action="{% url 'enviar-comentario' %}" class="reveal rd2">
+                    {% csrf_token %}
+                    <input type="hidden" name="tipo_feedback" id="tipoHidden" value="bug">
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="ep-label">Tu nombre *</label>
+                            <input type="text" name="nombre" class="ep-input" placeholder="¿Cómo te llamamos?" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="ep-label">Email *</label>
+                            <input type="email" name="email" class="ep-input" placeholder="para@responderte.com" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="ep-label">Teléfono *</label>
+                            <input type="tel" name="telefono" class="ep-input" placeholder="+56911111111" pattern="^\+?\d{8,13}$" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="ep-label">
+                                Tu mensaje *
+                                <span style="float:right;font-weight:400;text-transform:none;letter-spacing:0;color:rgba(148,163,184,0.4);">Máx. 200 · <span id="chLeft">200</span> restantes</span>
+                            </label>
+                            <textarea name="mensaje" id="feedMsg" class="ep-input" rows="4"
+                                      placeholder="Cuéntanos exactamente qué encontraste, qué mejorarías o cualquier idea que tengas..."
+                                      maxlength="200" required style="resize:vertical;"></textarea>
+                        </div>
+                        <div class="col-12 text-center" style="margin-top:8px;">
+                            <button type="submit" class="btn-primary-glow" style="font-size:14px;padding:14px 40px;">
+                                <i class="fas fa-paper-plane"></i> Enviar feedback
+                            </button>
+                            <p style="font-size:12px;color:rgba(148,163,184,0.38);margin-top:12px;">
+                                <i class="fas fa-lock me-1"></i>Tu información es confidencial.
+                            </p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="ep-footer">
+    <div class="footer-inner">
+        <div class="row align-items-center g-4">
+            <div class="col-12 col-md-4">
+                <div class="fbrand">EduPredict</div>
+                <p style="font-size:13px;color:rgba(148,163,184,0.45);margin:4px 0 0;">Tu asistente académico inteligente</p>
+            </div>
+            <div class="col-12 col-md-4 text-md-center">
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    <a href="#features"     style="font-size:13px;color:rgba(148,163,184,0.45);text-decoration:none;" onmouseover="this.style.color='#a5b4fc'" onmouseout="this.style.color='rgba(148,163,184,0.45)'">Funciones</a>
+                    <span style="color:rgba(148,163,184,0.18);">·</span>
+                    <a href="#how-it-works" style="font-size:13px;color:rgba(148,163,184,0.45);text-decoration:none;" onmouseover="this.style.color='#a5b4fc'" onmouseout="this.style.color='rgba(148,163,184,0.45)'">Cómo funciona</a>
+                    <span style="color:rgba(148,163,184,0.18);">·</span>
+                    <a href="#feedback"     style="font-size:13px;color:rgba(148,163,184,0.45);text-decoration:none;" onmouseover="this.style.color='#a5b4fc'" onmouseout="this.style.color='rgba(148,163,184,0.45)'">Feedback</a>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 text-md-end">
+                <p style="font-size:12px;color:rgba(148,163,184,0.3);margin:0;">Copyright © EduPredict 2025</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const t = document.getElementById('landing-toast');
+    if (!t) return;
+    requestAnimationFrame(() => {
+        t.style.opacity = '1';
+        t.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateX(-50%) translateY(-16px)';
+        setTimeout(() => t.remove(), 380);
+    }, 3400);
+});
+
+const nav = document.getElementById('epNav');
+window.addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 40), { passive: true });
+
+(function() {
+    const c = document.getElementById('particles');
+    if (!c) return;
+    const n = window.innerWidth < 768 ? 10 : 20;
+    for (let i = 0; i < n; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const s = Math.random() * 3 + 1.5;
+        p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*12+10}s;animation-delay:${Math.random()*10}s;`;
+        c.appendChild(p);
+    }
+})();
+
+function counter(el) {
+    const t = parseInt(el.dataset.count);
+    if (isNaN(t)) return;
+    let c = 0;
+    const step = Math.ceil(t / 36);
+    const timer = setInterval(() => {
+        c = Math.min(c + step, t);
+        el.textContent = c;
+        if (c >= t) clearInterval(timer);
+    }, 28);
+}
+setTimeout(() => document.querySelectorAll('.hstat [data-count]').forEach(counter), 900);
+
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+function setTipo(btn, tipo) {
+    document.querySelectorAll('.ftype-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tipoHidden').value = tipo;
+}
+
+const fm = document.getElementById('feedMsg');
+const cl = document.getElementById('chLeft');
+if (fm && cl) fm.addEventListener('input', () => {
+    const r = 200 - fm.value.length;
+    cl.textContent = r;
+    cl.style.color = r < 30 ? '#f87171' : 'rgba(148,163,184,0.4)';
+});
+
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+        const t = document.querySelector(a.getAttribute('href'));
+        if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+    });
+});
+</script>
+</body>
+</html>

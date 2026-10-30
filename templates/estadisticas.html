@@ -1,0 +1,505 @@
+{% extends "base/base.html" %}
+
+{% block titulo %}Estadísticas — {{ user.username }}{% endblock %}
+
+{% block contenido %}
+<style>
+.stat-select {
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 10px !important;
+    color: #e2e8f0 !important;
+    font-size: 14px !important;
+    padding: 10px 14px !important;
+    transition: border-color 0.2s !important;
+}
+.stat-select:focus {
+    border-color: rgba(99,102,241,0.5) !important;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.13) !important;
+    background: rgba(255,255,255,0.09) !important;
+    color: #e2e8f0 !important;
+    outline: none !important;
+}
+.stat-select option { background: #1a1a2e; color: #e2e8f0; }
+</style>
+
+<div class="container-fluid">
+
+    <div class="text-center mb-4">
+        <h2 style="font-weight:800;color:#f1f5f9;font-size:clamp(22px,4vw,32px);">📊 Estadísticas Comparativas</h2>
+        <p style="color:rgba(148,163,184,0.6);">Compara tu rendimiento entre períodos</p>
+    </div>
+
+    {% if error %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:40px;text-align:center;">
+                <i class="fas fa-chart-bar" style="font-size:48px;color:rgba(99,102,241,0.25);margin-bottom:16px;display:block;"></i>
+                <h5 style="color:#e2e8f0;font-weight:700;">Sin suficientes datos</h5>
+                <p style="color:rgba(148,163,184,0.6);font-size:14px;">{{ error }}</p>
+                <a href="{% url 'miSemestre' %}"
+                   style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:10px 24px;border-radius:20px;text-decoration:none;font-size:13px;font-weight:700;">
+                    <i class="fas fa-arrow-left me-2"></i>Ir a Periodo Académico
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+
+    <!-- Selector -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-12 col-lg-8">
+            <div style="background:rgba(13,13,30,0.9);border:1px solid rgba(99,102,241,0.15);border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.35);">
+                <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:16px 24px;">
+                    <h6 style="color:#fff;margin:0;font-weight:700;"><i class="fas fa-sliders-h me-2"></i>Seleccionar Periodos para Comparar</h6>
+                </div>
+                <div style="padding:20px 24px;">
+                    <form method="GET" id="comparacionForm">
+                        <div class="row align-items-end g-3">
+                            <div class="col-12 col-md-5">
+                                <label style="font-size:11px;font-weight:700;color:rgba(148,163,184,0.5);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:6px;">Primer Periodo</label>
+                                <select class="stat-select w-100" id="semestre1" name="semestre1" onchange="actualizarOpciones()">
+                                    <option value="">Seleccione un Periodo</option>
+                                    {% for semestre in semestres_con_ramos %}
+                                        <option value="{{ semestre.id }}" {% if semestre1 and semestre.id == semestre1.id %}selected{% endif %}>
+                                            {{ semestre.nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-2 text-center">
+                                <span style="font-size:20px;font-weight:900;background:linear-gradient(135deg,#a5b4fc,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">VS</span>
+                            </div>
+                            <div class="col-12 col-md-5">
+                                <label style="font-size:11px;font-weight:700;color:rgba(148,163,184,0.5);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:6px;">Segundo Periodo</label>
+                                <select class="stat-select w-100" id="semestre2" name="semestre2" onchange="actualizarOpciones()">
+                                    <option value="">Seleccione un Periodo</option>
+                                    {% for semestre in semestres_con_ramos %}
+                                        <option value="{{ semestre.id }}" {% if semestre2 and semestre.id == semestre2.id %}selected{% endif %}>
+                                            {{ semestre.nombre }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button type="submit"
+                                    style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:20px;padding:10px 32px;font-weight:700;font-size:14px;cursor:pointer;transition:opacity 0.2s;"
+                                    onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+                                <i class="fas fa-chart-bar me-2"></i>Comparar Periodos
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if semestre1 and semestre2 %}
+
+    <!-- CARDS RESUMEN -->
+    <div class="row g-3 mb-4 justify-content-center">
+        <div class="col-6 col-md-3">
+            <div style="background:linear-gradient(135deg,#1a6fb5,#4ba3ff);border-radius:14px;padding:20px;text-align:center;box-shadow:0 4px 20px rgba(75,163,255,0.25);">
+                <div style="font-size:11px;color:rgba(255,255,255,0.8);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">{{ semestre1.nombre }}</div>
+                <div style="font-size:36px;font-weight:900;color:#fff;line-height:1;">{{ promedio_general1|floatformat:1 }}</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px;">Promedio General</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            {% if promedio_general1 > promedio_general2 %}
+            <div style="background:linear-gradient(135deg,#1a7a35,#28a745);border-radius:14px;padding:20px;text-align:center;box-shadow:0 4px 20px rgba(40,167,69,0.25);">
+                <div style="font-size:11px;color:rgba(255,255,255,0.8);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">{{ semestre1.nombre }} lidera</div>
+                <div style="font-size:36px;font-weight:900;color:#fff;line-height:1;">↑</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px;">Mejor rendimiento</div>
+            </div>
+            {% elif promedio_general2 > promedio_general1 %}
+            <div style="background:linear-gradient(135deg,#c8960a,#ffc107);border-radius:14px;padding:20px;text-align:center;box-shadow:0 4px 20px rgba(255,193,7,0.22);">
+                <div style="font-size:11px;color:rgba(0,0,0,0.7);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">{{ semestre2.nombre }} lidera</div>
+                <div style="font-size:36px;font-weight:900;color:#1a1a1a;line-height:1;">↑</div>
+                <div style="font-size:11px;color:rgba(0,0,0,0.6);margin-top:4px;">Mejor rendimiento</div>
+            </div>
+            {% else %}
+            <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:14px;padding:20px;text-align:center;box-shadow:0 4px 20px rgba(79,70,229,0.25);">
+                <div style="font-size:11px;color:rgba(255,255,255,0.8);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Empate</div>
+                <div style="font-size:36px;font-weight:900;color:#fff;line-height:1;">=</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px;">Mismo promedio</div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-6 col-md-3">
+            <div style="background:linear-gradient(135deg,#c8960a,#ffc107);border-radius:14px;padding:20px;text-align:center;box-shadow:0 4px 20px rgba(255,193,7,0.22);">
+                <div style="font-size:11px;color:rgba(0,0,0,0.7);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">{{ semestre2.nombre }}</div>
+                <div style="font-size:36px;font-weight:900;color:#1a1a1a;line-height:1;">{{ promedio_general2|floatformat:1 }}</div>
+                <div style="font-size:11px;color:rgba(0,0,0,0.6);margin-top:4px;">Promedio General</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;text-align:center;">
+                <div style="font-size:11px;color:rgba(148,163,184,0.5);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Ramos</div>
+                <div style="font-size:36px;font-weight:900;color:#f1f5f9;line-height:1;">{{ ramos_semestre1|length }} / {{ ramos_semestre2|length }}</div>
+                <div style="font-size:11px;color:rgba(148,163,184,0.4);margin-top:4px;">S1 / S2 comparados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRÁFICOS -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-lg-8">
+            <div style="background:rgba(13,13,30,0.9);border:1px solid rgba(99,102,241,0.12);border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+                <div style="padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-chart-bar" style="color:#818cf8;"></i>
+                    <span style="font-weight:700;color:#e2e8f0;font-size:14px;">Comparación por Ramo</span>
+                    <span style="font-size:12px;color:rgba(148,163,184,0.45);margin-left:4px;">— {{ semestre1.nombre }} vs {{ semestre2.nombre }}</span>
+                </div>
+                <div style="padding:20px;height:320px;">
+                    <canvas id="barChart"></canvas>
+                </div>
+                <!-- Leyenda custom con SVG para la línea punteada -->
+                <div style="padding:8px 24px 16px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:7px;">
+                        <div style="width:14px;height:14px;background:#4ba3ff;border-radius:3px;flex-shrink:0;"></div>
+                        <span style="font-size:12px;color:rgba(148,163,184,0.6);">{{ semestre1.nombre }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:7px;">
+                        <div style="width:14px;height:14px;background:#ffc107;border-radius:3px;flex-shrink:0;"></div>
+                        <span style="font-size:12px;color:rgba(148,163,184,0.6);">{{ semestre2.nombre }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:7px;">
+                        <svg width="26" height="14" style="flex-shrink:0;">
+                            <line x1="0" y1="7" x2="26" y2="7" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="6,4"/>
+                        </svg>
+                        <span style="font-size:12px;color:rgba(148,163,184,0.6);">Mínimo aprobación (4.0)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div style="background:rgba(13,13,30,0.9);border:1px solid rgba(99,102,241,0.12);border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+                <div style="padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-star" style="color:#c084fc;"></i>
+                    <span style="font-weight:700;color:#e2e8f0;font-size:14px;">Perfil Comparativo</span>
+                </div>
+                <div style="padding:16px;height:320px;display:flex;align-items:center;justify-content:center;">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla detalle -->
+    <div style="background:rgba(13,13,30,0.9);border:1px solid rgba(99,102,241,0.12);border-radius:16px;overflow:hidden;margin-bottom:24px;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+        <div style="padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-table" style="color:#818cf8;"></i>
+            <span style="font-weight:700;color:#e2e8f0;font-size:14px;">Detalle por Ramo</span>
+        </div>
+        <div class="row g-0">
+            <div class="col-12 col-md-6" style="border-right:1px solid rgba(255,255,255,0.05);">
+                <div style="padding:12px 20px;background:rgba(75,163,255,0.08);border-bottom:1px solid rgba(75,163,255,0.15);">
+                    <span style="font-weight:700;color:#93c5fd;font-size:13px;">📘 {{ semestre1.nombre }}</span>
+                    <span style="float:right;font-size:12px;color:rgba(147,197,253,0.6);">Prom. {{ promedio_general1|floatformat:1 }}</span>
+                </div>
+                {% for ramo in ramos_semestre1 %}
+                <div style="padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:13px;color:rgba(226,232,240,0.8);font-weight:500;">{{ ramo.nombre }}</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:60px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+                            <div style="width:{% widthratio ramo.promedio_final 7 100 %}%;height:100%;background:{% if ramo.promedio_final >= 5.5 %}#10b981{% elif ramo.promedio_final >= 4.0 %}#4ba3ff{% else %}#ef4444{% endif %};border-radius:3px;"></div>
+                        </div>
+                        <span style="font-weight:800;font-size:15px;color:{% if ramo.promedio_final >= 5.5 %}#6ee7b7{% elif ramo.promedio_final >= 4.0 %}#93c5fd{% else %}#f87171{% endif %};">{{ ramo.promedio_final_display }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="col-12 col-md-6">
+                <div style="padding:12px 20px;background:rgba(255,193,7,0.07);border-bottom:1px solid rgba(255,193,7,0.15);">
+                    <span style="font-weight:700;color:#fcd34d;font-size:13px;">📙 {{ semestre2.nombre }}</span>
+                    <span style="float:right;font-size:12px;color:rgba(252,211,77,0.55);">Prom. {{ promedio_general2|floatformat:1 }}</span>
+                </div>
+                {% for ramo in ramos_semestre2 %}
+                <div style="padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:13px;color:rgba(226,232,240,0.8);font-weight:500;">{{ ramo.nombre }}</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:60px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+                            <div style="width:{% widthratio ramo.promedio_final 7 100 %}%;height:100%;background:{% if ramo.promedio_final >= 5.5 %}#10b981{% elif ramo.promedio_final >= 4.0 %}#ffc107{% else %}#ef4444{% endif %};border-radius:3px;"></div>
+                        </div>
+                        <span style="font-weight:800;font-size:15px;color:{% if ramo.promedio_final >= 5.5 %}#6ee7b7{% elif ramo.promedio_final >= 4.0 %}#fcd34d{% else %}#f87171{% endif %};">{{ ramo.promedio_final_display }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function actualizarOpciones() {
+    const s1 = document.getElementById('semestre1');
+    const s2 = document.getElementById('semestre2');
+    if (!s1 || !s2) return;
+    for (let i = 0; i < s1.options.length; i++) s1.options[i].disabled = false;
+    for (let i = 0; i < s2.options.length; i++) s2.options[i].disabled = false;
+    if (s1.value) for (let i = 0; i < s2.options.length; i++) { if (s2.options[i].value === s1.value) s2.options[i].disabled = true; }
+    if (s2.value) for (let i = 0; i < s1.options.length; i++) { if (s1.options[i].value === s2.value) s1.options[i].disabled = true; }
+}
+document.addEventListener('DOMContentLoaded', actualizarOpciones);
+</script>
+
+{% if semestre1 and semestre2 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const nombresS1 = [{% for r in ramos_semestre1 %}"{{ r.nombre|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const nombresS2 = [{% for r in ramos_semestre2 %}"{{ r.nombre|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const labelS1   = "{{ semestre1.nombre|escapejs }}";
+const labelS2   = "{{ semestre2.nombre|escapejs }}";
+
+const promGenS1 = Math.min(7.0, Math.max(0.0, parseFloat("{{ promedio_general1 }}".replace(',','.')) || 0));
+const promGenS2 = Math.min(7.0, Math.max(0.0, parseFloat("{{ promedio_general2 }}".replace(',','.')) || 0));
+
+const promediosS1 = [{% for r in ramos_semestre1 %}"{{ r.promedio_final }}".replace(',','.'){% if not forloop.last %},{% endif %}{% endfor %}].map(v => Math.min(7.0, Math.max(0.0, parseFloat(v))));
+const promediosS2 = [{% for r in ramos_semestre2 %}"{{ r.promedio_final }}".replace(',','.'){% if not forloop.last %},{% endif %}{% endfor %}].map(v => Math.min(7.0, Math.max(0.0, parseFloat(v))));
+
+Chart.defaults.color = 'rgba(148,163,184,0.65)';
+
+/*
+ * PLUGIN: línea horizontal de referencia (mínimo aprobatorio 4.0)
+ * Se dibuja con Canvas API directamente sobre el área de plot del gráfico,
+ * de borde izquierdo a borde derecho del eje X — no depende de los datos.
+ * Esto garantiza que la línea siempre cubra todo el ancho del gráfico,
+ * sin importar cuántos ramos/posiciones haya.
+ */
+const refLinePlugin = {
+    id: 'refLine4',
+    afterDraw(chart) {
+        if (chart.canvas.id !== 'barChart') return;
+        const ctx   = chart.ctx;
+        const yAxis = chart.scales.y;
+        const xAxis = chart.scales.x;
+        if (!yAxis || !xAxis) return;
+
+        const y = yAxis.getPixelForValue(4.0);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([9, 6]);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth   = 2.5;
+        ctx.globalAlpha = 0.9;
+        // De borde izquierdo a borde derecho del área de plot
+        ctx.moveTo(xAxis.left,  y);
+        ctx.lineTo(xAxis.right, y);
+        ctx.stroke();
+        ctx.restore();
+    }
+};
+
+// Registrar el plugin globalmente antes de crear el chart
+Chart.register(refLinePlugin);
+
+window.addEventListener('load', function() {
+
+    // ── GRÁFICO DE BARRAS ──────────────────────────────────────────────
+    const canvasBar = document.getElementById('barChart');
+    if (canvasBar) {
+        const ctxBar = canvasBar.getContext('2d');
+        const maxRamos  = Math.max(nombresS1.length, nombresS2.length);
+        const labelsEje = [];
+        for (let i = 0; i < maxRamos; i++) labelsEje.push('Pos. ' + (i + 1));
+
+        // null en slots vacíos para no renderizar barra fantasma
+        const dataS1 = nombresS1.map((_, i) => promediosS1[i] ?? null);
+        const dataS2 = nombresS2.map((_, i) => promediosS2[i] ?? null);
+        // Asegurar que los arrays tengan la misma longitud que labelsEje
+        while (dataS1.length < maxRamos) dataS1.push(null);
+        while (dataS2.length < maxRamos) dataS2.push(null);
+
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: labelsEje,
+                datasets: [
+                    {
+                        label: labelS1,
+                        data: dataS1,
+                        backgroundColor: 'rgba(75,163,255,0.82)',
+                        borderColor: 'rgba(75,163,255,1)',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        skipNull: true
+                    },
+                    {
+                        label: labelS2,
+                        data: dataS2,
+                        backgroundColor: 'rgba(255,193,7,0.82)',
+                        borderColor: 'rgba(255,193,7,1)',
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        skipNull: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(13,13,30,0.96)',
+                        borderColor: 'rgba(99,102,241,0.3)',
+                        borderWidth: 1,
+                        titleColor: '#e2e8f0',
+                        bodyColor: 'rgba(148,163,184,0.8)',
+                        callbacks: {
+                            title: function(items) {
+                                const i  = items[0].dataIndex;
+                                const ds = items[0].datasetIndex;
+                                if (ds === 0) return nombresS1[i] || labelsEje[i];
+                                if (ds === 1) return nombresS2[i] || labelsEje[i];
+                                return '';
+                            },
+                            label: function(item) {
+                                if (item.parsed.y === null) return null;
+                                return ' ' + item.dataset.label + ': ' + parseFloat(item.parsed.y).toFixed(1);
+                            },
+                            afterBody: function() {
+                                return [' ── Mínimo aprobación: 4.0'];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 7,
+                        ticks: {
+                            stepSize: 1,
+                            color: 'rgba(148,163,184,0.5)',
+                            font: { size: 11 },
+                            callback: function(v) { return v.toFixed(1); }
+                        },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    },
+                    x: {
+                        ticks: { color: 'rgba(148,163,184,0.5)', font: { size: 11 } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── RADAR CHART ────────────────────────────────────────────────────
+    /*
+     * Métricas verificadas (correctas):
+     * - Prom. General → promedio ponderado real del período
+     * - Nota Máxima   → mayor nota individual entre todos los ramos
+     * - Nota Mínima   → menor nota individual entre todos los ramos
+     * - % Aprobados   → (ramos con prom≥4.0 / total) × 7  [escala 0–7]
+     * - Consistencia  → 7 − (max − min)  [7=sin dispersión, 0=máxima]
+     *
+     * Ejemplo S2 `222` [5.0×15, 4.0×25, 1.0×30, 7.0×30]:
+     *   promGen=4.2 | max=7.0 | min=1.0 | aprobados=7.0 | consist=1.0 ✓
+     */
+    const canvasRadar = document.getElementById('radarChart');
+    if (canvasRadar) {
+        const ctxRadar = canvasRadar.getContext('2d');
+
+        // Los datos ahora se reciben pre-calculados desde el backend (views.py)
+        // Se usa parseFloat con replace para evitar errores de locale (comas vs puntos)
+        const metricsS1 = [
+            parseFloat("{{ metrics1.promedio }}".replace(',', '.')), 
+            parseFloat("{{ metrics1.max }}".replace(',', '.')), 
+            parseFloat("{{ metrics1.min }}".replace(',', '.')), 
+            parseFloat("{{ metrics1.aprobados }}".replace(',', '.')), 
+            parseFloat("{{ metrics1.consistencia }}".replace(',', '.'))
+        ];
+        const metricsS2 = [
+            parseFloat("{{ metrics2.promedio }}".replace(',', '.')), 
+            parseFloat("{{ metrics2.max }}".replace(',', '.')), 
+            parseFloat("{{ metrics2.min }}".replace(',', '.')), 
+            parseFloat("{{ metrics2.aprobados }}".replace(',', '.')), 
+            parseFloat("{{ metrics2.consistencia }}".replace(',', '.'))
+        ];
+
+        new Chart(ctxRadar, {
+            type: 'radar',
+            data: {
+                labels: ['Prom. General', 'Nota Máxima', 'Nota Mínima', '% Aprobados', 'Consistencia'],
+                datasets: [
+                    {
+                        label: labelS1,
+                        data: metricsS1,
+                        backgroundColor: 'rgba(75,163,255,0.14)',
+                        borderColor: 'rgba(75,163,255,0.9)',
+                        pointBackgroundColor: 'rgba(75,163,255,1)',
+                        pointBorderColor: 'rgba(75,163,255,0.4)',
+                        borderWidth: 2,
+                        pointRadius: 4
+                    },
+                    {
+                        label: labelS2,
+                        data: metricsS2,
+                        backgroundColor: 'rgba(255,193,7,0.14)',
+                        borderColor: 'rgba(255,193,7,0.9)',
+                        pointBackgroundColor: 'rgba(255,193,7,1)',
+                        pointBorderColor: 'rgba(255,193,7,0.4)',
+                        borderWidth: 2,
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            font: { size: 11 },
+                            color: 'rgba(148,163,184,0.65)',
+                            boxWidth: 12,
+                            padding: 14
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(13,13,30,0.96)',
+                        borderColor: 'rgba(99,102,241,0.3)',
+                        borderWidth: 1,
+                        titleColor: '#e2e8f0',
+                        bodyColor: 'rgba(148,163,184,0.8)',
+                        callbacks: {
+                            label: function(item) {
+                                return ' ' + item.dataset.label + ': ' + parseFloat(item.parsed.r).toFixed(2);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 7,
+                        ticks: {
+                            stepSize: 1,
+                            font: { size: 9 },
+                            color: 'rgba(148,163,184,0.4)',
+                            backdropColor: 'transparent'
+                        },
+                        grid:        { color: 'rgba(255,255,255,0.06)' },
+                        angleLines:  { color: 'rgba(255,255,255,0.06)' },
+                        pointLabels: { font: { size: 10 }, color: 'rgba(203,213,225,0.65)' }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

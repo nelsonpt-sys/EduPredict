@@ -1,0 +1,246 @@
+{% load static %}
+
+<style>
+/* ══ TOPBAR MINIMAL ══════════════════════════════════════════════ */
+.topbar.navbar {
+    background: rgba(8,8,22,0.96) !important;
+    border-bottom: 1px solid rgba(99,102,241,0.12) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.35) !important;
+    padding: 0 1.5rem !important;
+    min-height: 62px !important;
+    position: relative !important;
+    z-index: 1040 !important;
+}
+
+/* Divider */
+.topbar-divider {
+    border-left: 1px solid rgba(99,102,241,0.15) !important;
+    height: 1.6rem !important;
+    margin: auto 0.75rem !important;
+}
+
+/* Breadcrumb central */
+.tb-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(148,163,184,0.55);
+}
+.tb-breadcrumb .tb-brand {
+    color: rgba(165,180,252,0.7);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    font-size: 13px;
+}
+.tb-breadcrumb .tb-sep {
+    color: rgba(99,102,241,0.3);
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1;
+}
+.tb-breadcrumb .tb-page {
+    color: rgba(226,232,240,0.75);
+    font-weight: 700;
+    font-size: 13px;
+}
+
+/* Status pill pequeño */
+.tb-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(16,185,129,0.07);
+    border: 1px solid rgba(16,185,129,0.18);
+    border-radius: 20px;
+    padding: 3px 10px 3px 7px;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(74,222,128,0.75);
+    white-space: nowrap;
+}
+.tb-status-dot {
+    width: 6px;
+    height: 6px;
+    background: #4ade80;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Usuario pill */
+.topbar .nav-link.dropdown-toggle {
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    background: rgba(99,102,241,0.1) !important;
+    border: 1px solid rgba(99,102,241,0.2) !important;
+    border-radius: 50px !important;
+    padding: 5px 14px 5px 6px !important;
+    transition: background 0.2s, border-color 0.2s !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+}
+.topbar .nav-link.dropdown-toggle:hover {
+    background: rgba(99,102,241,0.2) !important;
+    border-color: rgba(99,102,241,0.35) !important;
+}
+.topbar .nav-link.dropdown-toggle .mr-2 {
+    color: #a5b4fc !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    margin-right: 0 !important;
+}
+.topbar .img-profile {
+    width: 28px !important;
+    height: 28px !important;
+    border: 2px solid rgba(129,140,248,0.45) !important;
+}
+
+/* Dropdown menu */
+.topbar .dropdown-menu {
+    background: #0d0d22 !important;
+    border: 1px solid rgba(99,102,241,0.22) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important;
+    padding: 8px !important;
+    min-width: 200px !important;
+    margin-top: 10px !important;
+    z-index: 9999 !important;
+    position: absolute !important;
+}
+.topbar .dropdown-item {
+    color: rgba(203,213,225,0.8) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    padding: 9px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    transition: background 0.15s !important;
+    text-decoration: none !important;
+}
+.topbar .dropdown-item:hover {
+    background: rgba(99,102,241,0.16) !important;
+    color: #e2e8f0 !important;
+}
+.topbar .dropdown-item i,
+.topbar .dropdown-item .bi {
+    color: rgba(129,140,248,0.75) !important;
+    width: 16px !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
+}
+.topbar .dropdown-divider {
+    border-color: rgba(99,102,241,0.1) !important;
+    margin: 5px 8px !important;
+}
+.topbar .dropdown-item.logout-item { color: rgba(248,113,113,0.85) !important; }
+.topbar .dropdown-item.logout-item:hover { background: rgba(239,68,68,0.12) !important; color: #f87171 !important; }
+.topbar .dropdown-item.logout-item i,
+.topbar .dropdown-item.logout-item .bi { color: rgba(248,113,113,0.75) !important; }
+
+/* Hamburger mobile */
+#sidebarToggleTop {
+    color: rgba(148,163,184,0.7) !important;
+    border: 1px solid rgba(99,102,241,0.18) !important;
+    border-radius: 8px !important;
+    padding: 6px 10px !important;
+    background: rgba(99,102,241,0.08) !important;
+    transition: background 0.2s !important;
+}
+#sidebarToggleTop:hover {
+    background: rgba(99,102,241,0.18) !important;
+    color: #a5b4fc !important;
+}
+</style>
+
+<nav class="navbar navbar-expand navbar-light bg-gradient-primary topbar mb-4 static-top shadow">
+
+    <!-- Hamburger (mobile) -->
+    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+        <i class="fa fa-bars"></i>
+    </button>
+
+    <!-- Centro: breadcrumb de página -->
+    <div class="d-none d-md-flex align-items-center mx-auto gap-2" style="gap:10px;">
+        <div class="tb-breadcrumb">
+            <span class="tb-brand">EduPredict</span>
+            <span class="tb-sep">/</span>
+            <span class="tb-page" id="tb-page-name">Panel académico</span>
+        </div>
+
+        {% if user.is_authenticated and NUM_PERIODO %}
+        <div class="topbar-divider"></div>
+        <div class="tb-status-pill">
+            <span class="tb-status-dot"></span>
+            {{ NUM_PERIODO }}° {{ TIPO_LABEL }} activo
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Derecha: dropdown usuario -->
+    <ul class="navbar-nav ml-auto d-flex align-items-center">
+        <div class="topbar-divider d-none d-sm-block"></div>
+
+        {% if user.is_authenticated %}
+        <li class="nav-item dropdown no-arrow">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <img class="img-profile rounded-circle"
+                     src="{% static 'img/undraw_profile.svg' %}">
+                <span class="mr-2 d-none d-lg-inline small">{{ user.username }}</span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                 aria-labelledby="userDropdown">
+
+                <div style="padding:10px 14px 8px;border-bottom:1px solid rgba(99,102,241,0.1);margin-bottom:5px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <div>
+                            <div style="color:#e2e8f0;font-size:13px;font-weight:700;">{{ user.username }}</div>
+                            <div style="color:rgba(148,163,184,0.6);font-size:11px;">Estudiante · EduPredict</div>
+                        </div>
+                    </div>
+                </div>
+
+                <a class="dropdown-item logout-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Cerrar Sesión
+                </a>
+            </div>
+        </li>
+        {% else %}
+        <li class="nav-item">
+            <span class="nav-link" style="color:rgba(148,163,184,0.6);font-size:13px;">
+                <i class="fas fa-user-slash me-1" style="color:rgba(129,140,248,0.5);"></i>
+                No estás logueado
+            </span>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+
+<script>
+// Nombre de la página actual en el breadcrumb
+(function(){
+    const rutas = {
+        '/index/'        : 'Inicio',
+        '/mi_periodo/'   : 'Período Académico',
+        '/estadisticas/' : 'Estadísticas',
+        '/filtrar_ramos/': 'Filtrar Ramos',
+        '/crear_ramo/'   : 'Crear Ramo',
+        '/editar-ramo/'  : 'Editar Ramo',
+        '/setup-periodos/': 'Configuración',
+    };
+    const path = window.location.pathname;
+    const el   = document.getElementById('tb-page-name');
+    if (!el) return;
+    for (const [key, label] of Object.entries(rutas)) {
+        if (path.startsWith(key)) { el.textContent = label; return; }
+    }
+})();
+</script>

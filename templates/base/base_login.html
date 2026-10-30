@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block titulo %}EduPredict{% endblock %}</title>
+
+    <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,800,900" rel="stylesheet">
+    <link href="{% static 'css/sb-admin-2.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        body.bg-gradient-primary {
+            background-color: #07071a;
+            background-image:
+                radial-gradient(circle, rgba(99,102,241,0.12) 1px, transparent 1px),
+                radial-gradient(ellipse 55% 45% at 15% 20%, rgba(79,70,229,0.14) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 85% 85%, rgba(6,182,212,0.08) 0%, transparent 70%);
+            background-size: 28px 28px, 100% 100%, 100% 100%;
+            min-height: 100vh;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .auth-card {
+            border: 1px solid rgba(99,102,241,0.15);
+            border-radius: 20px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+            overflow: hidden;
+            background: transparent;
+        }
+        .auth-card .card-body { padding: 0; }
+
+        .auth-left {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            padding: 48px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+        }
+        .auth-left .brand-icon {
+            width: 70px; height: 70px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 30px; margin-bottom: 20px;
+        }
+        .auth-left h2 { font-weight: 800; font-size: 28px; margin-bottom: 10px; letter-spacing: -0.5px; }
+        .auth-left p  { font-size: 14px; opacity: 0.85; line-height: 1.7; margin: 0; }
+        .auth-left .features { margin-top: 32px; text-align: left; width: 100%; }
+        .auth-left .feature-item {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 14px; font-size: 13px; opacity: 0.9;
+        }
+        .auth-left .feature-item i {
+            width: 28px; height: 28px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; flex-shrink: 0;
+        }
+
+        .auth-right {
+            padding: 48px 40px;
+            background: rgba(13,13,30,0.97);
+            border-left: 1px solid rgba(99,102,241,0.12);
+        }
+        .auth-right .form-control-user {
+            border-radius: 12px !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            padding: 13px 18px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            height: auto;
+            background: rgba(255,255,255,0.05) !important;
+            color: #e2e8f0 !important;
+        }
+        .auth-right .form-control-user::placeholder { color: rgba(100,116,139,0.55) !important; }
+        .auth-right .form-control-user:focus {
+            border-color: rgba(99,102,241,0.5) !important;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.14) !important;
+            background: rgba(255,255,255,0.08) !important;
+            color: #e2e8f0 !important;
+            outline: none !important;
+        }
+        .auth-right .btn-user {
+            border-radius: 12px !important;
+            padding: 13px;
+            font-weight: 700;
+            font-size: 15px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border: none;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .auth-right .btn-user:hover { opacity: 0.92; transform: translateY(-1px); }
+        .auth-right .btn-primary { background: linear-gradient(135deg, #4f46e5, #7c3aed) !important; border: none !important; }
+        .auth-right a { color: #818cf8; font-weight: 600; }
+        .auth-right a:hover { color: #a5b4fc; }
+        .auth-divider { border-color: rgba(255,255,255,0.08) !important; }
+
+        @media (max-width: 767px) {
+            .auth-left  { display: none; }
+            .auth-right { padding: 36px 28px; }
+        }
+
+        /* ═══ TOASTS ═══ */
+        #auth-toast-container {
+            position: fixed; top: 24px; right: 24px; z-index: 99999;
+            display: flex; flex-direction: column; gap: 10px;
+            pointer-events: none; max-width: 360px;
+            width: calc(100vw - 48px);
+        }
+        .auth-toast {
+            pointer-events: all;
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px 16px; border-radius: 14px;
+            border: 1px solid transparent;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            animation: authToastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+            position: relative; overflow: hidden;
+        }
+        .auth-toast.hiding { animation: authToastOut 0.25s ease-in forwards; }
+        @keyframes authToastIn  { from{opacity:0;transform:translateX(100%) scale(0.95);} to{opacity:1;transform:translateX(0) scale(1);} }
+        @keyframes authToastOut { from{opacity:1;transform:translateX(0);} to{opacity:0;transform:translateX(110%);} }
+        .auth-toast.success { background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.08));border-color:rgba(16,185,129,0.3); }
+        .auth-toast.danger  { background:linear-gradient(135deg,rgba(220,53,69,0.12),rgba(185,28,28,0.08));border-color:rgba(220,53,69,0.3); }
+        .auth-toast.warning { background:linear-gradient(135deg,rgba(234,179,8,0.12),rgba(161,98,7,0.08));border-color:rgba(234,179,8,0.3); }
+        .auth-toast.info    { background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(79,70,229,0.08));border-color:rgba(99,102,241,0.3); }
+        .auth-toast-icon { width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;color:#fff; }
+        .auth-toast.success .auth-toast-icon { background:linear-gradient(135deg,#10b981,#34d399); }
+        .auth-toast.danger  .auth-toast-icon { background:linear-gradient(135deg,#dc3545,#ef4444); }
+        .auth-toast.warning .auth-toast-icon { background:linear-gradient(135deg,#d97706,#fbbf24); }
+        .auth-toast.info    .auth-toast-icon { background:linear-gradient(135deg,#4f46e5,#818cf8); }
+        .auth-toast-title { font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px; }
+        .auth-toast.success .auth-toast-title { color:#10b981; }
+        .auth-toast.danger  .auth-toast-title { color:#ef4444; }
+        .auth-toast.warning .auth-toast-title { color:#fbbf24; }
+        .auth-toast.info    .auth-toast-title { color:#818cf8; }
+        .auth-toast-msg { font-size:13px;color:rgba(203,213,225,0.8);line-height:1.5; }
+        .auth-toast-close { background:none;border:none;cursor:pointer;color:rgba(148,163,184,0.5);font-size:14px;padding:0;flex-shrink:0;transition:color 0.15s; }
+        .auth-toast-close:hover { color:#94a3b8; }
+        .auth-toast-progress { position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px;animation:authProgress linear forwards; }
+        @keyframes authProgress { from{transform:scaleX(1);transform-origin:left;} to{transform:scaleX(0);transform-origin:left;} }
+        .auth-toast.success .auth-toast-progress { background:linear-gradient(90deg,#10b981,#34d399); }
+        .auth-toast.info    .auth-toast-progress { background:linear-gradient(90deg,#4f46e5,#818cf8); }
+        .auth-toast.warning .auth-toast-progress { background:linear-gradient(90deg,#d97706,#fbbf24); }
+    </style>
+</head>
+
+<body class="bg-gradient-primary">
+
+<div id="auth-toast-container">
+    {% if messages %}
+        {% for message in messages %}
+        <div class="auth-toast {{ message.tags }}" id="auth-toast-{{ forloop.counter }}">
+            <div class="auth-toast-icon">
+                {% if message.tags == 'success' %}<i class="fas fa-check"></i>
+                {% elif message.tags == 'danger' %}<i class="fas fa-times"></i>
+                {% elif message.tags == 'warning' %}<i class="fas fa-exclamation"></i>
+                {% else %}<i class="fas fa-info"></i>{% endif %}
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div class="auth-toast-title">
+                    {% if message.tags == 'success' %}✓ Éxito
+                    {% elif message.tags == 'danger' %}✕ Error
+                    {% elif message.tags == 'warning' %}⚠ Atención
+                    {% else %}ℹ Info{% endif %}
+                </div>
+                <div class="auth-toast-msg">{{ message }}</div>
+            </div>
+            <button class="auth-toast-close" onclick="cerrarAuthToast('auth-toast-{{ forloop.counter }}')">
+                <i class="fas fa-times" style="font-size:10px;"></i>
+            </button>
+            {% if message.tags == 'success' or message.tags == 'info' %}
+            <div class="auth-toast-progress" id="auth-prog-{{ forloop.counter }}"></div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height:100vh;">
+        <div class="col-xl-9 col-lg-11 col-md-11">
+            <div class="card auth-card my-5">
+                <div class="card-body">
+                    <div class="row g-0">
+                        <div class="col-md-5 auth-left">
+                            <div class="brand-icon">
+                                <i class="bi bi-emoji-sunglasses-fill"></i>
+                            </div>
+                            <h2>EduPredict</h2>
+                            <p>Tu asistente académico inteligente. Gestiona tus notas, anticipa tus resultados y nunca más te sorprenda un promedio.</p>
+                            <div class="features">
+                                <div class="feature-item"><i class="fas fa-robot"></i><span>Asistente IA integrado</span></div>
+                                <div class="feature-item"><i class="fas fa-cloud"></i><span>Datos guardados en la nube</span></div>
+                                <div class="feature-item"><i class="fas fa-shield-alt"></i><span>Sistema de Niveles académicos</span></div>
+                                <div class="feature-item"><i class="fas fa-chart-line"></i><span>Gráficos comparativos</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-7 auth-right">
+                            {% block contenido %}{% endblock %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+<script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+
+<script>
+function cerrarAuthToast(id) {
+    const t = document.getElementById(id);
+    if (!t) return;
+    t.classList.add('hiding');
+    setTimeout(() => t.remove(), 260);
+}
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.auth-toast').forEach(toast => {
+        const id = toast.id;
+        const num = id.split('-').pop();
+        let duration = null;
+        if (toast.classList.contains('success')) duration = 4000;
+        else if (toast.classList.contains('info')) duration = 4500;
+        if (duration) {
+            const prog = document.getElementById('auth-prog-' + num);
+            if (prog) prog.style.animationDuration = duration + 'ms';
+            setTimeout(() => cerrarAuthToast(id), duration);
+        }
+    });
+});
+</script>
+</body>
+</html>

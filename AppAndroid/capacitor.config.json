@@ -1,0 +1,11 @@
+{
+  "appId": "com.edupredict.app",
+  "appName": "EduPredict",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "hostname": "localhost",
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}

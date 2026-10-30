@@ -1,0 +1,283 @@
+{% extends "base/base.html" %}
+
+{% block titulo %}Cálculo Rápido — EduPredict{% endblock %}
+
+{% block contenido %}
+
+<div class="row justify-content-center g-4">
+
+    <!-- CALCULADORA -->
+    <div class="col-12 col-lg-7">
+        <div style="background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);overflow:hidden;">
+
+            <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px 32px;">
+                <h4 style="color:#fff;margin:0;font-weight:700;">
+                    <i class="fas fa-calculator me-2"></i>Cálculo Rápido
+                </h4>
+                <p style="color:rgba(255,255,255,0.75);margin:4px 0 0;font-size:13px;">Calcula tu promedio al instante, sin necesidad de cuenta</p>
+            </div>
+
+            <div style="padding:28px 32px;">
+
+                <!-- PASO 1: Evaluaciones -->
+                <div class="mb-4">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                        <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">1</div>
+                        <h6 style="margin:0;font-weight:700;color:#1e293b;">Evaluaciones</h6>
+                    </div>
+
+                    <div style="background:#f8fafc;border-radius:10px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:#64748b;">
+                        <i class="fas fa-info-circle me-1"></i>Los porcentajes deben sumar exactamente <strong>100%</strong>.
+                        Porcentaje acumulado: <strong id="totalPorc" style="color:#dc2626;">0%</strong>
+                    </div>
+
+                    <div id="evaluaciones-container"></div>
+
+                    <button type="button" onclick="agregarEvaluacion()"
+                            style="background:transparent;border:2px dashed #c7d2fe;border-radius:10px;color:#4f46e5;padding:10px;width:100%;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;"
+                            onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='transparent'">
+                        <i class="fas fa-plus me-2"></i>Añadir evaluación
+                    </button>
+                </div>
+
+                <hr style="border-color:#f1f5f9;">
+
+                <!-- PASO 2: Examen -->
+                <div class="mb-4">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                        <div style="width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0;">2</div>
+                        <h6 style="margin:0;font-weight:700;color:#1e293b;">Examen final</h6>
+                        <span style="font-size:12px;color:#94a3b8;">(opcional)</span>
+                    </div>
+
+                    <div id="examen-container"></div>
+
+                    <button type="button" id="btn-examen" onclick="toggleExamen()"
+                            style="background:transparent;border:2px dashed #fde68a;border-radius:10px;color:#d97706;padding:10px;width:100%;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;"
+                            onmouseover="this.style.background='#fffbeb'" onmouseout="this.style.background='transparent'">
+                        <i class="fas fa-file-alt me-2"></i>Añadir examen
+                    </button>
+                </div>
+
+                <hr style="border-color:#f1f5f9;">
+
+                <!-- Resultados inline -->
+                <div style="display:flex;gap:12px;">
+                    <div style="flex:1;background:#eff6ff;border-radius:12px;padding:16px;text-align:center;border:1.5px solid #bfdbfe;">
+                        <div style="font-size:11px;color:#3b82f6;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Promedio Parcial</div>
+                        <div id="resultado-parcial" style="font-size:28px;font-weight:800;color:#1d4ed8;">—</div>
+                    </div>
+                    <div style="flex:1;background:#f0fdf4;border-radius:12px;padding:16px;text-align:center;border:1.5px solid #bbf7d0;">
+                        <div style="font-size:11px;color:#16a34a;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Promedio Final</div>
+                        <div id="resultado-final" style="font-size:28px;font-weight:800;color:#16a34a;">—</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL DERECHO: preview + CTA -->
+    <div class="col-12 col-lg-4">
+        <div style="position:sticky;top:20px;display:flex;flex-direction:column;gap:16px;">
+
+            <!-- Vista previa en vivo -->
+            <div style="background:#1e1e2e;border-radius:16px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,0.3);">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+                    <div style="width:8px;height:8px;background:#4ade80;border-radius:50%;box-shadow:0 0 6px #4ade80;"></div>
+                    <span style="color:#e2e8f0;font-size:13px;font-weight:600;">Vista previa en vivo</span>
+                </div>
+
+                <div style="background:#2a2a3e;border-radius:10px;padding:16px;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span style="color:#94a3b8;font-size:12px;">Promedio parcial</span>
+                        <span id="preview-parcial" style="color:#4ba3ff;font-weight:700;font-size:20px;">—</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span style="color:#94a3b8;font-size:12px;">Promedio final</span>
+                        <span id="preview-final" style="color:#4ade80;font-weight:700;font-size:20px;">—</span>
+                    </div>
+                </div>
+
+                <div id="preview-evaluaciones" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+            </div>
+
+            <!-- CTA: únete -->
+            <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:16px;padding:24px;">
+                <div style="font-size:22px;margin-bottom:8px;">🎓</div>
+                <h6 style="color:#fff;font-weight:800;margin-bottom:8px;font-size:15px;">¿Quieres más que solo calcular?</h6>
+                <p style="color:rgba(255,255,255,0.8);font-size:12px;line-height:1.6;margin-bottom:16px;">Crea tu cuenta gratis y desbloquea todo:</p>
+                <ul style="list-style:none;padding:0;margin:0 0 18px 0;">
+                    <li style="color:rgba(255,255,255,0.9);font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+                        <span style="background:rgba(255,255,255,0.2);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;">✓</span>
+                        Guarda tus ramos y notas en la nube
+                    </li>
+                    <li style="color:rgba(255,255,255,0.9);font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+                        <span style="background:rgba(255,255,255,0.2);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;">✓</span>
+                        Asistente IA que conoce tus notas reales
+                    </li>
+                    <li style="color:rgba(255,255,255,0.9);font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+                        <span style="background:rgba(255,255,255,0.2);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;">✓</span>
+                        Sistema de Niveles de alerta por ramo
+                    </li>
+                    <li style="color:rgba(255,255,255,0.9);font-size:12px;display:flex;align-items:center;gap:8px;">
+                        <span style="background:rgba(255,255,255,0.2);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;">✓</span>
+                        Gráficos comparativos entre semestres
+                    </li>
+                </ul>
+                <a href="{% url 'signup' %}"
+                   style="display:block;background:#fff;color:#4f46e5;text-align:center;padding:11px;border-radius:10px;font-weight:700;font-size:13px;text-decoration:none;transition:opacity 0.2s;"
+                   onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                    <i class="fas fa-user-plus me-2"></i>Crear cuenta gratis
+                </a>
+                <a href="{% url 'login' %}"
+                   style="display:block;margin-top:8px;background:rgba(255,255,255,0.15);color:#fff;text-align:center;padding:10px;border-radius:10px;font-weight:600;font-size:12px;text-decoration:none;transition:opacity 0.2s;"
+                   onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                    Ya tengo cuenta
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+let evalContador = 0;
+let examenActivo = false;
+
+function agregarEvaluacion(notaVal='', porcVal='') {
+    evalContador++;
+    const contenedor = document.getElementById('evaluaciones-container');
+    const fila = document.createElement('div');
+    fila.className = 'eval-fila';
+    fila.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center;';
+    fila.innerHTML = `
+        <div style="flex:1;">
+            <input type="number" step="0.1" min="1" max="7"
+                   name="eval_nota_${evalContador}" placeholder="Nota (1.0–7.0)"
+                   class="form-control" style="border-radius:10px;border:1.5px solid #e2e8f0;font-size:14px;"
+                   value="${notaVal}" oninput="recalcular()">
+        </div>
+        <div style="flex:1;">
+            <input type="number" step="1" min="1" max="100"
+                   name="eval_porc_${evalContador}" placeholder="% Ponderación"
+                   class="form-control" style="border-radius:10px;border:1.5px solid #e2e8f0;font-size:14px;"
+                   value="${porcVal}" oninput="recalcular()">
+        </div>
+        <button type="button" onclick="this.parentElement.remove();recalcular();"
+                style="background:#fef2f2;border:1.5px solid #fecaca;color:#dc2626;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    contenedor.appendChild(fila);
+    recalcular();
+}
+
+function toggleExamen() {
+    const contenedor = document.getElementById('examen-container');
+    const btn = document.getElementById('btn-examen');
+    if (!examenActivo) {
+        contenedor.innerHTML = `
+            <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:12px;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <div style="flex:1;">
+                        <label style="font-size:11px;font-weight:600;color:#92400e;">NOTA EXAMEN</label>
+                        <input type="number" step="0.1" min="1" max="7" id="examen-nota"
+                               placeholder="1.0–7.0" class="form-control mt-1"
+                               style="border-radius:8px;border:1.5px solid #fde68a;" oninput="recalcular()">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:11px;font-weight:600;color:#92400e;">PONDERACIÓN %</label>
+                        <input type="number" step="1" min="1" max="60" id="examen-porc"
+                               placeholder="Ej: 30" class="form-control mt-1"
+                               style="border-radius:8px;border:1.5px solid #fde68a;" oninput="recalcular()">
+                    </div>
+                </div>
+            </div>`;
+        btn.innerHTML = '<i class="fas fa-times me-2"></i>Quitar examen';
+        btn.style.borderColor = '#fecaca';
+        btn.style.color = '#dc2626';
+        examenActivo = true;
+    } else {
+        contenedor.innerHTML = '';
+        btn.innerHTML = '<i class="fas fa-file-alt me-2"></i>Añadir examen';
+        btn.style.borderColor = '#fde68a';
+        btn.style.color = '#d97706';
+        examenActivo = false;
+    }
+    recalcular();
+}
+
+function redondearInacap(valor) {
+    return Math.round(valor * 10) / 10;
+}
+
+function recalcular() {
+    const filas = document.querySelectorAll('.eval-fila');
+    let sumaProductos = 0;
+    let sumaPorcentajes = 0;
+    let totalPorc = 0;
+    const insignias = [];
+
+    filas.forEach(fila => {
+        const inputNota = fila.querySelector('input[name^="eval_nota_"]');
+        const inputPorc = fila.querySelector('input[name^="eval_porc_"]');
+        const valorNota = parseFloat(inputNota?.value) || 0;
+        const valorPorc = parseFloat(inputPorc?.value) || 0;
+        totalPorc += valorPorc;
+        if (valorNota > 0 && valorPorc > 0) {
+            sumaProductos  += valorNota * valorPorc;
+            sumaPorcentajes += valorPorc;
+            insignias.push(`<span style="background:#1e40af;color:#fff;padding:3px 8px;border-radius:20px;font-size:11px;">${valorNota.toFixed(1)} (${valorPorc}%)</span>`);
+        } else if (valorPorc > 0) {
+            insignias.push(`<span style="background:#92400e;color:#fff;padding:3px 8px;border-radius:20px;font-size:11px;">⏳ (${valorPorc}%)</span>`);
+        }
+    });
+
+    const indicadorPorc = document.getElementById('totalPorc');
+    indicadorPorc.textContent = totalPorc + '%';
+    indicadorPorc.style.color = Math.abs(totalPorc - 100) < 0.01 ? '#16a34a' : '#dc2626';
+
+    let promedioParcial = sumaPorcentajes > 0 ? sumaProductos / sumaPorcentajes : 0;
+
+    const notaEx = parseFloat(document.getElementById('examen-nota')?.value) || 0;
+    const porcEx = parseFloat(document.getElementById('examen-porc')?.value) || 0;
+    let promedioFinal = promedioParcial;
+
+    if (notaEx > 0 && porcEx > 0) {
+        promedioFinal = promedioParcial * (1 - porcEx / 100) + notaEx * (porcEx / 100);
+        insignias.push(`<span style="background:#5b21b6;color:#fff;padding:3px 8px;border-radius:20px;font-size:11px;">Examen ${notaEx.toFixed(1)} (${porcEx}%)</span>`);
+    }
+
+    promedioParcial = redondearInacap(promedioParcial);
+    promedioFinal   = redondearInacap(promedioFinal);
+
+    const textoParc = sumaPorcentajes > 0 ? promedioParcial.toFixed(1) : '—';
+    const textoFin  = sumaPorcentajes > 0 ? promedioFinal.toFixed(1) : '—';
+    const colorFin  = promedioFinal >= 4.0 ? '#16a34a' : '#dc2626';
+    const bgFin     = promedioFinal >= 4.0 ? '#f0fdf4' : '#fef2f2';
+    const bordeFin  = promedioFinal >= 4.0 ? '#bbf7d0' : '#fecaca';
+
+    document.getElementById('resultado-parcial').textContent = textoParc;
+    document.getElementById('resultado-final').textContent   = textoFin;
+    document.getElementById('resultado-final').style.color   = colorFin;
+
+    const contenedorFin = document.getElementById('resultado-final').parentElement;
+    contenedorFin.style.background   = bgFin;
+    contenedorFin.style.borderColor  = bordeFin;
+
+    document.getElementById('preview-parcial').textContent = textoParc;
+    document.getElementById('preview-final').textContent   = textoFin;
+    document.getElementById('preview-final').style.color   = sumaPorcentajes > 0 ? (promedioFinal >= 4.0 ? '#4ade80' : '#f87171') : '#4ade80';
+    document.getElementById('preview-evaluaciones').innerHTML = insignias.join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    agregarEvaluacion();
+    agregarEvaluacion();
+    agregarEvaluacion();
+    agregarEvaluacion();
+});
+</script>
+{% endblock %}

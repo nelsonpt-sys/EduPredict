@@ -1,0 +1,268 @@
+{% extends "base/base.html" %}
+
+{% block titulo %}Filtrar Ramos — {{ user.username }}{% endblock %}
+
+{% block contenido %}
+<style>
+.filtro-card {
+    border-radius: 16px; padding: 20px 16px; text-align: center;
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid; text-decoration: none; display: block;
+}
+.filtro-card:hover { transform: translateY(-4px); text-decoration: none; }
+.filtro-card .filtro-icon { font-size: 26px; margin-bottom: 8px; }
+.filtro-card .filtro-label { font-size: 13px; font-weight: 800; }
+.filtro-card .filtro-rango { font-size: 11px; margin-top: 3px; }
+
+.filtro-reprobados        { background: rgba(239,68,68,0.12);  border-color: rgba(239,68,68,0.4); }
+.filtro-reprobados:hover  { box-shadow: 0 8px 28px rgba(239,68,68,0.2); }
+.filtro-reprobados.activo { background: linear-gradient(135deg,#b91c1c,#ef4444); border-color: #ef4444; }
+.filtro-reprobados        .filtro-label { color: #fca5a5; }
+.filtro-reprobados        .filtro-rango { color: rgba(252,165,165,0.6); }
+.filtro-reprobados.activo .filtro-label { color: #fff; }
+.filtro-reprobados.activo .filtro-rango { color: rgba(255,255,255,0.75); }
+
+.filtro-bajos        { background: rgba(245,158,11,0.12);  border-color: rgba(245,158,11,0.4); }
+.filtro-bajos:hover  { box-shadow: 0 8px 28px rgba(245,158,11,0.2); }
+.filtro-bajos.activo { background: linear-gradient(135deg,#b45309,#f59e0b); border-color: #f59e0b; }
+.filtro-bajos        .filtro-label { color: #fcd34d; }
+.filtro-bajos        .filtro-rango { color: rgba(252,211,77,0.6); }
+.filtro-bajos.activo .filtro-label { color: #1a1a1a; }
+.filtro-bajos.activo .filtro-rango { color: rgba(0,0,0,0.55); }
+
+.filtro-medios        { background: rgba(6,182,212,0.12);  border-color: rgba(6,182,212,0.4); }
+.filtro-medios:hover  { box-shadow: 0 8px 28px rgba(6,182,212,0.2); }
+.filtro-medios.activo { background: linear-gradient(135deg,#0e7490,#06b6d4); border-color: #06b6d4; }
+.filtro-medios        .filtro-label { color: #67e8f9; }
+.filtro-medios        .filtro-rango { color: rgba(103,232,249,0.6); }
+.filtro-medios.activo .filtro-label { color: #fff; }
+.filtro-medios.activo .filtro-rango { color: rgba(255,255,255,0.75); }
+
+.filtro-excelencia        { background: rgba(16,185,129,0.12);  border-color: rgba(16,185,129,0.4); }
+.filtro-excelencia:hover  { box-shadow: 0 8px 28px rgba(16,185,129,0.2); }
+.filtro-excelencia.activo { background: linear-gradient(135deg,#065f46,#10b981); border-color: #10b981; }
+.filtro-excelencia        .filtro-label { color: #6ee7b7; }
+.filtro-excelencia        .filtro-rango { color: rgba(110,231,183,0.6); }
+.filtro-excelencia.activo .filtro-label { color: #fff; }
+.filtro-excelencia.activo .filtro-rango { color: rgba(255,255,255,0.75); }
+
+/* ══ RAMO CARD COMPACTA ══ */
+.fr-card {
+    border-radius: 16px; overflow: hidden; position: relative;
+    transition: transform 0.22s cubic-bezier(0.34,1.3,0.64,1);
+}
+.fr-card:hover { transform: translateY(-4px); }
+.fr-stripe { height: 3px; width: 100%; position: absolute; top: 0; left: 0; }
+
+.fr-d5 { background: linear-gradient(145deg,rgba(6,182,212,0.28),rgba(14,116,144,0.22)); border: 1px solid rgba(6,182,212,0.4); }
+.fr-d5:hover { box-shadow: 0 10px 32px rgba(6,182,212,0.25); }
+.fr-d5 .fr-stripe { background: linear-gradient(90deg,#06b6d4,#0ea5e9); }
+.fr-d5 .fr-final-val { color: #67e8f9; }
+.fr-d5 .fr-final-box { background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.3); }
+
+.fr-d4 { background: linear-gradient(145deg,rgba(16,185,129,0.28),rgba(5,150,105,0.22)); border: 1px solid rgba(16,185,129,0.4); }
+.fr-d4:hover { box-shadow: 0 10px 32px rgba(16,185,129,0.25); }
+.fr-d4 .fr-stripe { background: linear-gradient(90deg,#10b981,#34d399); }
+.fr-d4 .fr-final-val { color: #6ee7b7; }
+.fr-d4 .fr-final-box { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); }
+
+.fr-d3 { background: linear-gradient(145deg,rgba(245,158,11,0.28),rgba(180,83,9,0.22)); border: 1px solid rgba(245,158,11,0.4); }
+.fr-d3:hover { box-shadow: 0 10px 32px rgba(245,158,11,0.25); }
+.fr-d3 .fr-stripe { background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+.fr-d3 .fr-final-val { color: #fcd34d; }
+.fr-d3 .fr-final-box { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); }
+
+.fr-d2 { background: linear-gradient(145deg,rgba(239,68,68,0.30),rgba(185,28,28,0.24)); border: 1px solid rgba(239,68,68,0.45); }
+.fr-d2:hover { box-shadow: 0 10px 32px rgba(239,68,68,0.3); }
+.fr-d2 .fr-stripe { background: linear-gradient(90deg,#ef4444,#f97316); }
+.fr-d2 .fr-final-val { color: #fca5a5; }
+.fr-d2 .fr-final-box { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.35); }
+
+.fr-d1 { background: linear-gradient(145deg,rgba(40,40,65,0.95),rgba(25,25,45,0.95)); border: 1px solid rgba(100,116,139,0.35); }
+.fr-d1:hover { box-shadow: 0 10px 32px rgba(0,0,0,0.4); }
+.fr-d1 .fr-stripe { background: linear-gradient(90deg,#374151,#4b5563); }
+.fr-d1 .fr-final-val { color: #d1d5db; }
+.fr-d1 .fr-final-box { background: rgba(55,65,81,0.4); border: 1px solid rgba(75,85,99,0.4); }
+
+.fr-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 20px; padding: 4px 11px;
+    font-size: 11px; font-weight: 800; border: 1px solid;
+}
+.fr-badge-d5 { background: rgba(6,182,212,0.18);  color: #67e8f9; border-color: rgba(6,182,212,0.4); }
+.fr-badge-d4 { background: rgba(16,185,129,0.18); color: #6ee7b7; border-color: rgba(16,185,129,0.4); }
+.fr-badge-d3 { background: rgba(245,158,11,0.18); color: #fcd34d; border-color: rgba(245,158,11,0.4); }
+.fr-badge-d2 { background: rgba(239,68,68,0.18);  color: #fca5a5; border-color: rgba(239,68,68,0.45); }
+.fr-badge-d1 { background: rgba(75,85,99,0.35);   color: #9ca3af; border-color: rgba(75,85,99,0.55); }
+
+.fr-stat { flex:1; border-radius: 9px; padding: 8px 6px; text-align: center; }
+.fr-stat-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(226,232,240,0.5); margin-bottom: 2px; }
+.fr-stat-val { font-size: 20px; font-weight: 900; line-height: 1; }
+.fr-stat-parcial { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); }
+.fr-stat-parcial .fr-stat-val { color: rgba(241,245,249,0.8); }
+.fr-stat-meta { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); }
+.fr-stat-meta .fr-stat-val { color: #fcd34d; }
+
+.fr-progress { height: 3px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; margin: 10px 0 3px; }
+.fr-progress-fill { height: 100%; border-radius: 3px; }
+.fr-d5 .fr-progress-fill { background: linear-gradient(90deg,#06b6d4,#0ea5e9); }
+.fr-d4 .fr-progress-fill { background: linear-gradient(90deg,#10b981,#34d399); }
+.fr-d3 .fr-progress-fill { background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+.fr-d2 .fr-progress-fill { background: linear-gradient(90deg,#ef4444,#f97316); }
+.fr-d1 .fr-progress-fill { background: linear-gradient(90deg,#374151,#4b5563); }
+</style>
+
+<div class="container-fluid">
+
+    <div class="text-center mb-4">
+        <h2 class="text-white" style="font-weight:800;"><i class="bi bi-funnel-fill me-2"></i>Filtrar Ramos</h2>
+        <p style="color:rgba(255,255,255,0.5);">Visualiza tus ramos organizados por rango de rendimiento</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row g-3 justify-content-center mb-4">
+        <div class="col-6 col-md-3">
+            <a href="?rango=reprobados" class="filtro-card filtro-reprobados {% if rango_seleccionado == 'reprobados' %}activo{% endif %}">
+                <div class="filtro-icon">❌</div>
+                <div class="filtro-label">Reprobados</div>
+                <div class="filtro-rango">0.0 — 3.9</div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="?rango=aprobados_bajos" class="filtro-card filtro-bajos {% if rango_seleccionado == 'aprobados_bajos' %}activo{% endif %}">
+                <div class="filtro-icon">⚠️</div>
+                <div class="filtro-label">Aprobados Bajos</div>
+                <div class="filtro-rango">4.0 — 4.9</div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="?rango=aprobados_medios" class="filtro-card filtro-medios {% if rango_seleccionado == 'aprobados_medios' %}activo{% endif %}">
+                <div class="filtro-icon">✅</div>
+                <div class="filtro-label">Aprobados Medios</div>
+                <div class="filtro-rango">5.0 — 6.9</div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="?rango=excelencia" class="filtro-card filtro-excelencia {% if rango_seleccionado == 'excelencia' %}activo{% endif %}">
+                <div class="filtro-icon">⭐</div>
+                <div class="filtro-label">Excelencia</div>
+                <div class="filtro-rango">7.0</div>
+            </a>
+        </div>
+    </div>
+
+    {% if nombre_rango %}
+
+    <!-- Header resultados -->
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:18px 24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+            <h5 style="color:#e2e8f0;margin:0;font-weight:700;font-size:16px;">
+                {% if rango_seleccionado == 'reprobados' %}❌{% elif rango_seleccionado == 'aprobados_bajos' %}⚠️{% elif rango_seleccionado == 'aprobados_medios' %}✅{% else %}⭐{% endif %}
+                {{ nombre_rango }}
+            </h5>
+            <p style="color:rgba(148,163,184,0.6);margin:3px 0 0;font-size:12px;">
+                {% if ramos_filtrados %}Resultados encontrados en tus períodos{% else %}No se encontraron ramos en este rango{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'filtrarRamos' %}"
+           style="background:rgba(255,255,255,0.06);color:rgba(203,213,225,0.6);padding:7px 16px;border-radius:20px;text-decoration:none;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,0.09);transition:all 0.2s;"
+           onmouseover="this.style.background='rgba(255,255,255,0.12)';this.style.color='#e2e8f0'"
+           onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.color='rgba(203,213,225,0.6)'">
+            <i class="fas fa-times me-1"></i>Limpiar filtro
+        </a>
+    </div>
+
+    {% if ramos_filtrados %}
+
+    {% for semestre, ramos in ramos_filtrados.items %}
+    <div style="margin-bottom:28px;">
+
+        <!-- Título período -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <div style="width:3px;height:22px;background:{% if rango_seleccionado == 'reprobados' %}#ef4444{% elif rango_seleccionado == 'aprobados_bajos' %}#f59e0b{% elif rango_seleccionado == 'aprobados_medios' %}#06b6d4{% else %}#10b981{% endif %};border-radius:2px;flex-shrink:0;"></div>
+            <span style="color:#e2e8f0;font-weight:700;font-size:14px;">
+                <i class="fas fa-calendar-alt me-2" style="color:rgba(165,180,252,0.5);"></i>{{ semestre.nombre }}
+            </span>
+            <span style="background:rgba(255,255,255,0.06);color:rgba(148,163,184,0.6);font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);">
+                {{ ramos|length }} ramo{% if ramos|length != 1 %}s{% endif %}
+            </span>
+        </div>
+
+        <!-- Cards -->
+        <div class="row g-3">
+            {% for ramo in ramos %}
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="fr-card {% if ramo.nivel == 5 %}fr-d5{% elif ramo.nivel == 4 %}fr-d4{% elif ramo.nivel == 3 %}fr-d3{% elif ramo.nivel == 2 %}fr-d2{% else %}fr-d1{% endif %}">
+                    <div class="fr-stripe"></div>
+                    <div style="padding:18px 16px 15px;">
+
+                        <!-- Badge Nivel + nombre -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;">
+                            <h6 style="margin:0;font-weight:800;color:#f1f5f9;font-size:14px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ ramo.nombre }}</h6>
+                            <span class="fr-badge {% if ramo.nivel == 5 %}fr-badge-d5{% elif ramo.nivel == 4 %}fr-badge-d4{% elif ramo.nivel == 3 %}fr-badge-d3{% elif ramo.nivel == 2 %}fr-badge-d2{% else %}fr-badge-d1{% endif %}">
+                                {% if ramo.nivel == 5 %}✅{% elif ramo.nivel == 4 %}📈{% elif ramo.nivel == 3 %}⚠️{% elif ramo.nivel == 2 %}🚨{% else %}❌{% endif %}
+                                N{{ ramo.nivel }}
+                            </span>
+                        </div>
+
+                        <!-- Barra de progreso -->
+                        {% if ramo.meta_promedio %}
+                        <div class="fr-progress">
+                            <div class="fr-progress-fill" style="width:{% widthratio ramo.promedio_final ramo.meta_promedio 100 %}%;max-width:100%;"></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(148,163,184,0.45);margin-bottom:10px;">
+                            <span>0</span><span>Meta {{ ramo.meta_promedio|floatformat:1 }}</span>
+                        </div>
+                        {% else %}
+                        <div class="fr-progress">
+                            <div class="fr-progress-fill" style="width:{% widthratio ramo.promedio_final 7 100 %}%;max-width:100%;"></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(148,163,184,0.45);margin-bottom:10px;">
+                            <span>0</span><span>7.0</span>
+                        </div>
+                        {% endif %}
+
+                        <!-- Stats -->
+                        <div style="display:flex;gap:7px;">
+                            <div class="fr-stat fr-stat-parcial">
+                                <div class="fr-stat-label">Parcial</div>
+                                <div class="fr-stat-val">{{ ramo.promedio_parcial_display }}</div>
+                            </div>
+                            <div class="fr-stat fr-final-box">
+                                <div class="fr-stat-label">Final</div>
+                                <div class="fr-stat-val fr-final-val">{{ ramo.promedio_final_display }}</div>
+                            </div>
+                            {% if ramo.meta_promedio %}
+                            <div class="fr-stat fr-stat-meta">
+                                <div class="fr-stat-label">Meta</div>
+                                <div class="fr-stat-val">{{ ramo.meta_promedio|floatformat:1 }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:56px;text-align:center;">
+        <i class="fas fa-search" style="font-size:40px;color:rgba(99,102,241,0.25);margin-bottom:14px;display:block;"></i>
+        <h5 style="color:rgba(226,232,240,0.7);font-weight:700;">Sin resultados</h5>
+        <p style="color:rgba(148,163,184,0.5);font-size:13px;">No tienes ramos con promedio en el rango <strong style="color:#e2e8f0;">{{ nombre_rango }}</strong></p>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:56px;text-align:center;">
+        <i class="bi bi-funnel" style="font-size:40px;color:rgba(99,102,241,0.25);margin-bottom:14px;display:block;"></i>
+        <h5 style="color:rgba(226,232,240,0.7);font-weight:700;">Selecciona un rango para comenzar</h5>
+        <p style="color:rgba(148,163,184,0.5);font-size:13px;">Haz clic en uno de los filtros de arriba para ver tus ramos</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
