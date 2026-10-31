@@ -19,7 +19,7 @@ python manage.py runserver
 ```
 
 ## Variables de entorno
-Ver `.env.example`. **Nunca** subas valores reales al repositorio.
+Ver `.env.example`. Los valores reales no se versionan: `.env` está excluido del repositorio.
 
 | Variable | Descripción |
 |---|---|
@@ -30,21 +30,15 @@ Ver `.env.example`. **Nunca** subas valores reales al repositorio.
 | `GEMINI_API_KEY` | Clave de Google AI Studio |
 | `GROQ_API_KEY` | Clave de Groq |
 
-## Despliegue gratuito
-1. Crea un proyecto en [Supabase](https://supabase.com) (plan Free) y copia la cadena de conexión *Session pooler*.
-2. En [Render](https://render.com) crea un *Web Service* desde este repo con la instancia **Free** (puedes usar `render.yaml`).
-3. Define las variables de entorno de la tabla anterior en el panel de Render. El build (`build.sh`) ejecuta `collectstatic` y `migrate`.
+## Despliegue
+El backend se despliega como *Web Service* en Render y se conecta a una base PostgreSQL en Supabase, ambos en su plan gratuito. La configuración del servicio está en `render.yaml`; el build (`build.sh`) ejecuta `collectstatic` y `migrate`, y las variables de entorno de la tabla anterior se definen en el panel de Render. Para la base se usa la cadena de conexión *Session pooler* de Supabase.
 
-## Despertar la base de datos (Supabase gratis)
-El plan gratuito de Supabase **pausa el proyecto tras ~7 días de inactividad**. Si la app responde con errores 500 al iniciar sesión:
-1. Entra a [supabase.com](https://supabase.com) e inicia sesión.
-2. Abre tu proyecto.
-3. Pulsa el botón **Restore project** y espera unos minutos.
-
-Además, el plan gratuito de Render duerme el servicio sin tráfico: la primera petición puede tardar entre 15 y 60 segundos.
+### Consideraciones del plan gratuito
+- Render suspende el servicio tras un período sin tráfico, por lo que la primera petición puede tardar entre 15 y 60 segundos en responder.
+- Supabase pausa los proyectos gratuitos tras unos 7 días de inactividad. Mientras la base está pausada, los endpoints que la usan responden con error 500 hasta que el proyecto se reactiva.
 
 ## App móvil
-En `AppAndroid/` está el proyecto Capacitor. La URL del backend se define en `AppAndroid/src/services/api.js` (`PRODUCTION_URL`).
+`AppAndroid/` contiene el cliente móvil (Capacitor + Vite). La URL del backend se define en `AppAndroid/src/services/api.js` (`PRODUCTION_URL`). El APK firmado está disponible en la [sección Releases](https://github.com/nelsonpt-sys/EduPredict/releases).
 
 ## Seguridad
 Las claves de API y la base de datos se configuran solo mediante variables de entorno.
