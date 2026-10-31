@@ -4,7 +4,7 @@
 const isNative = typeof window !== 'undefined' &&
   window.Capacitor?.isNativePlatform?.() === true;
 
-const PRODUCTION_URL = 'https://edupredictwebapp-backend.onrender.com';
+const PRODUCTION_URL = 'https://edupredictwebapp-backend-9m2j.onrender.com';
 const BACKEND = PRODUCTION_URL; 
 const API_URL = `${BACKEND}/api/movil`;
 
